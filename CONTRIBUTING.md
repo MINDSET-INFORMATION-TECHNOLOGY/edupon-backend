@@ -2,8 +2,8 @@
 This document provides the complete contribution guidelines and best practices for working on the EduPons backend services built using NestJS (Node.js/TypeScript).
 
 1. 🌳 Branching & Commit Conventions
-1.1 Branch Naming Convention
-All branches must start with a descriptive prefix indicating the nature of the change:
+   1.1 Branch Naming Convention
+   All branches must start with a descriptive prefix indicating the nature of the change:
 
 `feature/` - New modules, endpoints, or significant additions(e.g.,feature/analytics-module)
 `fix/` - Bug fixes for existing functionality(e.g., fix/user-password-reset)
@@ -16,7 +16,7 @@ All branches must start with a descriptive prefix indicating the nature of the c
 
 Follow the Conventional Commits specification:
 
-``` ():
+```():
 
 \`\`\`
 
@@ -120,7 +120,7 @@ export class AddAgeColumnToStudentProfile {
 
         Secret Scanning: Ensure .env files and similar secret files are listed in .gitignore.
 
-    
+
     4.2 Security Features
 
         Authorization: Implement all authorization logic using Guards (e.g., JWT validation, Role-Based Access Control (RBAC) checks) and decorators.
@@ -148,3 +148,4 @@ Before submitting a PR, ensure all these steps are complete:
 [ ] PR description clearly explains the changes and their impact.
 
 [ ] API documentation (Swagger) is updated if new endpoints or schemas were introduced.
+```
