@@ -22,14 +22,13 @@ jobs:
         run: npm install
       
       - name: Run Formatting Check
-        run: npm run format
+        run: npm run format:check
         
       - name: Run Linting Check
         run: npm run lint
         
       - name: Run Type Check (Lint-Type)
         run: npm run type-check
-
   build:
     needs: [code_quality_checks]
     runs-on: ubuntu-latest
