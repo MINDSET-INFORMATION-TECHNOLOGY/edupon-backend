@@ -398,3 +398,4 @@ Temporary Items
 .serverless/**/*.zip
 **node_modules/**
 **!node_modules/ # Added to include node_modules globally if not caught by VS template
+/generated/prisma
