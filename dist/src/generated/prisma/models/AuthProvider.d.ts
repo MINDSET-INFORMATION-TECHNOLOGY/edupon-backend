@@ -4,12 +4,20 @@ import type * as Prisma from "../internal/prismaNamespace.js";
 export type AuthProviderModel = runtime.Types.Result.DefaultSelection<Prisma.$AuthProviderPayload>;
 export type AggregateAuthProvider = {
     _count: AuthProviderCountAggregateOutputType | null;
+    _avg: AuthProviderAvgAggregateOutputType | null;
+    _sum: AuthProviderSumAggregateOutputType | null;
     _min: AuthProviderMinAggregateOutputType | null;
     _max: AuthProviderMaxAggregateOutputType | null;
 };
+export type AuthProviderAvgAggregateOutputType = {
+    userId: number | null;
+};
+export type AuthProviderSumAggregateOutputType = {
+    userId: number | null;
+};
 export type AuthProviderMinAggregateOutputType = {
     id: string | null;
-    userId: string | null;
+    userId: number | null;
     provider: $Enums.AuthProviderType | null;
     providerUserId: string | null;
     accessToken: string | null;
@@ -19,7 +27,7 @@ export type AuthProviderMinAggregateOutputType = {
 };
 export type AuthProviderMaxAggregateOutputType = {
     id: string | null;
-    userId: string | null;
+    userId: number | null;
     provider: $Enums.AuthProviderType | null;
     providerUserId: string | null;
     accessToken: string | null;
@@ -37,6 +45,12 @@ export type AuthProviderCountAggregateOutputType = {
     createdAt: number;
     updatedAt: number;
     _all: number;
+};
+export type AuthProviderAvgAggregateInputType = {
+    userId?: true;
+};
+export type AuthProviderSumAggregateInputType = {
+    userId?: true;
 };
 export type AuthProviderMinAggregateInputType = {
     id?: true;
@@ -76,6 +90,8 @@ export type AuthProviderAggregateArgs<ExtArgs extends runtime.Types.Extensions.I
     take?: number;
     skip?: number;
     _count?: true | AuthProviderCountAggregateInputType;
+    _avg?: AuthProviderAvgAggregateInputType;
+    _sum?: AuthProviderSumAggregateInputType;
     _min?: AuthProviderMinAggregateInputType;
     _max?: AuthProviderMaxAggregateInputType;
 };
@@ -90,12 +106,14 @@ export type AuthProviderGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
     take?: number;
     skip?: number;
     _count?: AuthProviderCountAggregateInputType | true;
+    _avg?: AuthProviderAvgAggregateInputType;
+    _sum?: AuthProviderSumAggregateInputType;
     _min?: AuthProviderMinAggregateInputType;
     _max?: AuthProviderMaxAggregateInputType;
 };
 export type AuthProviderGroupByOutputType = {
     id: string;
-    userId: string;
+    userId: number;
     provider: $Enums.AuthProviderType;
     providerUserId: string;
     accessToken: string | null;
@@ -103,6 +121,8 @@ export type AuthProviderGroupByOutputType = {
     createdAt: Date;
     updatedAt: Date;
     _count: AuthProviderCountAggregateOutputType | null;
+    _avg: AuthProviderAvgAggregateOutputType | null;
+    _sum: AuthProviderSumAggregateOutputType | null;
     _min: AuthProviderMinAggregateOutputType | null;
     _max: AuthProviderMaxAggregateOutputType | null;
 };
@@ -114,7 +134,7 @@ export type AuthProviderWhereInput = {
     OR?: Prisma.AuthProviderWhereInput[];
     NOT?: Prisma.AuthProviderWhereInput | Prisma.AuthProviderWhereInput[];
     id?: Prisma.StringFilter<"AuthProvider"> | string;
-    userId?: Prisma.StringFilter<"AuthProvider"> | string;
+    userId?: Prisma.IntFilter<"AuthProvider"> | number;
     provider?: Prisma.EnumAuthProviderTypeFilter<"AuthProvider"> | $Enums.AuthProviderType;
     providerUserId?: Prisma.StringFilter<"AuthProvider"> | string;
     accessToken?: Prisma.StringNullableFilter<"AuthProvider"> | string | null;
@@ -141,7 +161,7 @@ export type AuthProviderWhereUniqueInput = Prisma.AtLeast<{
     AND?: Prisma.AuthProviderWhereInput | Prisma.AuthProviderWhereInput[];
     OR?: Prisma.AuthProviderWhereInput[];
     NOT?: Prisma.AuthProviderWhereInput | Prisma.AuthProviderWhereInput[];
-    userId?: Prisma.StringFilter<"AuthProvider"> | string;
+    userId?: Prisma.IntFilter<"AuthProvider"> | number;
     provider?: Prisma.EnumAuthProviderTypeFilter<"AuthProvider"> | $Enums.AuthProviderType;
     providerUserId?: Prisma.StringFilter<"AuthProvider"> | string;
     accessToken?: Prisma.StringNullableFilter<"AuthProvider"> | string | null;
@@ -160,15 +180,17 @@ export type AuthProviderOrderByWithAggregationInput = {
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
     _count?: Prisma.AuthProviderCountOrderByAggregateInput;
+    _avg?: Prisma.AuthProviderAvgOrderByAggregateInput;
     _max?: Prisma.AuthProviderMaxOrderByAggregateInput;
     _min?: Prisma.AuthProviderMinOrderByAggregateInput;
+    _sum?: Prisma.AuthProviderSumOrderByAggregateInput;
 };
 export type AuthProviderScalarWhereWithAggregatesInput = {
     AND?: Prisma.AuthProviderScalarWhereWithAggregatesInput | Prisma.AuthProviderScalarWhereWithAggregatesInput[];
     OR?: Prisma.AuthProviderScalarWhereWithAggregatesInput[];
     NOT?: Prisma.AuthProviderScalarWhereWithAggregatesInput | Prisma.AuthProviderScalarWhereWithAggregatesInput[];
     id?: Prisma.StringWithAggregatesFilter<"AuthProvider"> | string;
-    userId?: Prisma.StringWithAggregatesFilter<"AuthProvider"> | string;
+    userId?: Prisma.IntWithAggregatesFilter<"AuthProvider"> | number;
     provider?: Prisma.EnumAuthProviderTypeWithAggregatesFilter<"AuthProvider"> | $Enums.AuthProviderType;
     providerUserId?: Prisma.StringWithAggregatesFilter<"AuthProvider"> | string;
     accessToken?: Prisma.StringNullableWithAggregatesFilter<"AuthProvider"> | string | null;
@@ -188,7 +210,7 @@ export type AuthProviderCreateInput = {
 };
 export type AuthProviderUncheckedCreateInput = {
     id?: string;
-    userId: string;
+    userId: number;
     provider: $Enums.AuthProviderType;
     providerUserId: string;
     accessToken?: string | null;
@@ -208,7 +230,7 @@ export type AuthProviderUpdateInput = {
 };
 export type AuthProviderUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
-    userId?: Prisma.StringFieldUpdateOperationsInput | string;
+    userId?: Prisma.IntFieldUpdateOperationsInput | number;
     provider?: Prisma.EnumAuthProviderTypeFieldUpdateOperationsInput | $Enums.AuthProviderType;
     providerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     accessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -218,7 +240,7 @@ export type AuthProviderUncheckedUpdateInput = {
 };
 export type AuthProviderCreateManyInput = {
     id?: string;
-    userId: string;
+    userId: number;
     provider: $Enums.AuthProviderType;
     providerUserId: string;
     accessToken?: string | null;
@@ -237,7 +259,7 @@ export type AuthProviderUpdateManyMutationInput = {
 };
 export type AuthProviderUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
-    userId?: Prisma.StringFieldUpdateOperationsInput | string;
+    userId?: Prisma.IntFieldUpdateOperationsInput | number;
     provider?: Prisma.EnumAuthProviderTypeFieldUpdateOperationsInput | $Enums.AuthProviderType;
     providerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     accessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -258,7 +280,7 @@ export type AuthProviderProviderProviderUserIdCompoundUniqueInput = {
     providerUserId: string;
 };
 export type AuthProviderUserIdProviderCompoundUniqueInput = {
-    userId: string;
+    userId: number;
     provider: $Enums.AuthProviderType;
 };
 export type AuthProviderCountOrderByAggregateInput = {
@@ -270,6 +292,9 @@ export type AuthProviderCountOrderByAggregateInput = {
     refreshToken?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+};
+export type AuthProviderAvgOrderByAggregateInput = {
+    userId?: Prisma.SortOrder;
 };
 export type AuthProviderMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -290,6 +315,9 @@ export type AuthProviderMinOrderByAggregateInput = {
     refreshToken?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+};
+export type AuthProviderSumOrderByAggregateInput = {
+    userId?: Prisma.SortOrder;
 };
 export type AuthProviderCreateNestedManyWithoutUserInput = {
     create?: Prisma.XOR<Prisma.AuthProviderCreateWithoutUserInput, Prisma.AuthProviderUncheckedCreateWithoutUserInput> | Prisma.AuthProviderCreateWithoutUserInput[] | Prisma.AuthProviderUncheckedCreateWithoutUserInput[];
@@ -329,8 +357,14 @@ export type AuthProviderUncheckedUpdateManyWithoutUserNestedInput = {
     updateMany?: Prisma.AuthProviderUpdateManyWithWhereWithoutUserInput | Prisma.AuthProviderUpdateManyWithWhereWithoutUserInput[];
     deleteMany?: Prisma.AuthProviderScalarWhereInput | Prisma.AuthProviderScalarWhereInput[];
 };
+export type StringFieldUpdateOperationsInput = {
+    set?: string;
+};
 export type EnumAuthProviderTypeFieldUpdateOperationsInput = {
     set?: $Enums.AuthProviderType;
+};
+export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null;
 };
 export type AuthProviderCreateWithoutUserInput = {
     id?: string;
@@ -376,7 +410,7 @@ export type AuthProviderScalarWhereInput = {
     OR?: Prisma.AuthProviderScalarWhereInput[];
     NOT?: Prisma.AuthProviderScalarWhereInput | Prisma.AuthProviderScalarWhereInput[];
     id?: Prisma.StringFilter<"AuthProvider"> | string;
-    userId?: Prisma.StringFilter<"AuthProvider"> | string;
+    userId?: Prisma.IntFilter<"AuthProvider"> | number;
     provider?: Prisma.EnumAuthProviderTypeFilter<"AuthProvider"> | $Enums.AuthProviderType;
     providerUserId?: Prisma.StringFilter<"AuthProvider"> | string;
     accessToken?: Prisma.StringNullableFilter<"AuthProvider"> | string | null;
@@ -480,7 +514,7 @@ export type $AuthProviderPayload<ExtArgs extends runtime.Types.Extensions.Intern
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
-        userId: string;
+        userId: number;
         provider: $Enums.AuthProviderType;
         providerUserId: string;
         accessToken: string | null;
@@ -546,7 +580,7 @@ export interface Prisma__AuthProviderClient<T, Null = never, ExtArgs extends run
 }
 export interface AuthProviderFieldRefs {
     readonly id: Prisma.FieldRef<"AuthProvider", 'String'>;
-    readonly userId: Prisma.FieldRef<"AuthProvider", 'String'>;
+    readonly userId: Prisma.FieldRef<"AuthProvider", 'Int'>;
     readonly provider: Prisma.FieldRef<"AuthProvider", 'AuthProviderType'>;
     readonly providerUserId: Prisma.FieldRef<"AuthProvider", 'String'>;
     readonly accessToken: Prisma.FieldRef<"AuthProvider", 'String'>;

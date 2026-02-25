@@ -1,6 +1,8 @@
 jest.mock('./auth.service', () => ({
   AuthService: class {
     create = jest.fn();
+    requestOtp = jest.fn();
+    verifyOtp = jest.fn();
     getProviderSignInUrl = jest.fn();
     signInWithProviderCallback = jest.fn();
     findAll = jest.fn();
@@ -14,7 +16,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { SocialSignInCallbackDto } from './dto/social-signin.dto';
+import { SocialSignInDto } from './dto/social-signin.dto';
 import { AuthProviderType } from '../generated/prisma/enums';
 
 describe('AuthController', () => {
@@ -64,10 +66,9 @@ describe('AuthController', () => {
     });
 
     it('should call service.signInWithProvider from callback route', async () => {
-      const dto: SocialSignInCallbackDto = {
+      const dto: SocialSignInDto = {
         code: 'oauth-code-123',
-        password: 'strongPassword123',
-        confirmPassword: 'strongPassword123',
+        scope: 'openid email profile',
       };
       const authenticated = { id: '1', email: 'google@example.com', fullname: 'Google User', role: 'STUDENT' };
       jest.spyOn(service, 'signInWithProviderCallback').mockResolvedValue(authenticated as any);

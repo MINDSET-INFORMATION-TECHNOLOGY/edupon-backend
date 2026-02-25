@@ -8,11 +8,50 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAuthDto = void 0;
 const enums_1 = require("../../generated/prisma/enums");
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const isEmail_1 = __importDefault(require("validator/lib/isEmail"));
+const PERSONAL_EMAIL_DOMAINS = new Set([
+    'gmail.com',
+    'yahoo.com',
+    'outlook.com',
+    'hotmail.com',
+    'live.com',
+    'icloud.com',
+    'aol.com',
+    'protonmail.com',
+    'gmx.com',
+    'yandex.com',
+    'mail.com',
+]);
+let IsCompanyEmailConstraint = class IsCompanyEmailConstraint {
+    validate(value) {
+        if (typeof value !== 'string') {
+            return false;
+        }
+        const normalized = value.trim().toLowerCase();
+        if (!(0, isEmail_1.default)(normalized)) {
+            return false;
+        }
+        const domain = normalized.split('@')[1];
+        if (!domain) {
+            return false;
+        }
+        return !PERSONAL_EMAIL_DOMAINS.has(domain);
+    }
+    defaultMessage() {
+        return 'company_email must be a valid company email (personal email domains are not allowed)';
+    }
+};
+IsCompanyEmailConstraint = __decorate([
+    (0, class_validator_1.ValidatorConstraint)({ name: 'isCompanyEmail', async: false })
+], IsCompanyEmailConstraint);
 class CreateAuthDto {
     email;
     fullname;
@@ -21,6 +60,8 @@ class CreateAuthDto {
     institution;
     area_of_interest;
     avatar;
+    industry;
+    company_email;
 }
 exports.CreateAuthDto = CreateAuthDto;
 __decorate([
@@ -42,20 +83,30 @@ __decorate([
     __metadata("design:type", String)
 ], CreateAuthDto.prototype, "password", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ enum: enums_1.Role }),
+    (0, swagger_1.ApiProperty)({
+        enum: enums_1.Role,
+        description: 'Profile role. Role-specific requirements apply to other fields.',
+    }),
     (0, class_validator_1.IsEnum)(enums_1.Role, { message: 'Invalid role provided' }),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateAuthDto.prototype, "role", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Some University' }),
-    (0, class_validator_1.IsOptional)(),
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'Some University',
+        description: 'Required when role is STUDENT or EDUCATOR.',
+    }),
+    (0, class_validator_1.ValidateIf)((o) => o.role === enums_1.Role.STUDENT || o.role === enums_1.Role.EDUCATOR),
+    (0, class_validator_1.IsNotEmpty)({ message: 'institution is required for STUDENT or EDUCATOR role' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateAuthDto.prototype, "institution", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Computer Science' }),
-    (0, class_validator_1.IsOptional)(),
+    (0, swagger_1.ApiProperty)({
+        example: 'Computer Science',
+        description: 'Required for all roles.',
+    }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'area_of_interest is required' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateAuthDto.prototype, "area_of_interest", void 0);
@@ -65,4 +116,25 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateAuthDto.prototype, "avatar", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'Information Technology',
+        description: 'Required when role is COMPANY.',
+    }),
+    (0, class_validator_1.ValidateIf)((o) => o.role === enums_1.Role.COMPANY),
+    (0, class_validator_1.IsNotEmpty)({ message: 'industry is required for COMPANY role' }),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateAuthDto.prototype, "industry", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'contact@acme.com',
+        description: 'Required when role is COMPANY. Must be a business email domain.',
+    }),
+    (0, class_validator_1.ValidateIf)((o) => o.role === enums_1.Role.COMPANY),
+    (0, class_validator_1.IsNotEmpty)({ message: 'company_email is required for COMPANY role' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Validate)(IsCompanyEmailConstraint),
+    __metadata("design:type", String)
+], CreateAuthDto.prototype, "company_email", void 0);
 //# sourceMappingURL=create-auth.dto.js.map

@@ -26,22 +26,17 @@ enum AuthProviderType {
 }
 
 model User {
-  id              String   @id @default(uuid())
-  email           String   @unique
-  fullname        String
-  avatar          String?
-  password        String
-  role            Role
-  institution     String?
-  area_of_interest  String?
+  id              Int      @id @default(autoincrement())
+  profile         Json?
   authProviders   AuthProvider[]
+  otpVerification UserOtp?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
 model AuthProvider {
   id           String   @id @default(uuid())
-  userId       String
+  userId       Int
   provider     AuthProviderType
   providerUserId String
   accessToken  String?
@@ -52,4 +47,15 @@ model AuthProvider {
   
   @@unique([provider, providerUserId])
   @@unique([userId, provider])
+}
+
+model UserOtp {
+  id         String   @id @default(uuid())
+  userId     Int      @unique
+  codeHash   String
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
