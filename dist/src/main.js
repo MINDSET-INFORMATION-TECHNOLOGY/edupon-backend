@@ -7,6 +7,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const port = Number(process.env.PORT ?? 3000);
     app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
     app.setGlobalPrefix('api');
     const swaggerConfig = new swagger_1.DocumentBuilder()
@@ -16,7 +17,9 @@ async function bootstrap() {
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, swaggerConfig);
     swagger_1.SwaggerModule.setup('api/docs', app, document);
-    await app.listen(3000);
+    const server = await app.listen(port);
+    server.requestTimeout = 60_000;
+    server.headersTimeout = 65_000;
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

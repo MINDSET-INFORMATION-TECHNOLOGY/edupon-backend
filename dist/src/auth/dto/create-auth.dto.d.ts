@@ -5,6 +5,8 @@ export declare class CreateAuthDto {
     password: string;
     role: Role;
     institution?: string;
-    area_of_interest?: string;
+    area_of_interest: string;
     avatar?: string;
+    industry?: string;
+    company_email?: string;
 }

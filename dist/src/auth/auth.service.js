@@ -41,6 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var AuthService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
@@ -48,64 +49,174 @@ const prisma_service_1 = require("../prisma/prisma.service");
 const enums_1 = require("../generated/prisma/enums");
 const bcrypt = __importStar(require("bcrypt"));
 const crypto_1 = require("crypto");
+const mail_service_1 = require("../mail/mail.service");
 let AuthService = class AuthService {
+    static { AuthService_1 = this; }
     prisma;
-    constructor(prisma) {
+    mailService;
+    static OTP_TTL_MS = 5 * 60 * 1000;
+    constructor(prisma, mailService) {
         this.prisma = prisma;
+        this.mailService = mailService;
     }
     async create(createAuthDto) {
+        const normalizedEmail = createAuthDto.email.trim().toLowerCase();
+        const existingUser = await this.findUserByEmail(normalizedEmail);
+        if (existingUser) {
+            throw new common_1.BadRequestException('Email already in use');
+        }
         const hashed = await bcrypt.hash(createAuthDto.password, 10);
-        try {
-            const user = await this.prisma.user.create({
-                data: {
-                    ...createAuthDto,
-                    password: hashed,
-                },
-            });
-            delete user.password;
-            return user;
-        }
-        catch (e) {
-            if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
-                throw new common_1.BadRequestException('Email already in use');
-            }
-            throw e;
-        }
+        const profile = this.buildRoleProfile({
+            email: normalizedEmail,
+            fullname: createAuthDto.fullname,
+            avatar: createAuthDto.avatar ?? null,
+            password: hashed,
+            role: createAuthDto.role,
+            institution: createAuthDto.institution ?? null,
+            industry: createAuthDto.industry ?? null,
+            area_of_interest: createAuthDto.area_of_interest ?? null,
+            company_email: createAuthDto.company_email ?? null,
+            is_verified: false,
+        });
+        const user = await this.prisma.user.create({
+            data: { profile: profile },
+        });
+        return this.toPublicUser(user);
     }
     async findAll() {
-        return this.prisma.user.findMany({ omit: { password: true } });
+        const users = await this.prisma.user.findMany();
+        return users.map((user) => this.toPublicUser(user));
     }
     async findOne(id) {
         const user = await this.prisma.user.findUnique({
-            where: { id: id.toString() },
-            omit: { password: true },
+            where: { id },
         });
-        if (!user)
+        if (!user) {
             throw new common_1.NotFoundException('User not found');
-        return user;
+        }
+        return this.toPublicUser(user);
     }
     async update(id, updateAuthDto) {
-        if (updateAuthDto.password) {
-            updateAuthDto.password = await bcrypt.hash(updateAuthDto.password, 10);
+        const existingUser = await this.prisma.user.findUnique({ where: { id } });
+        if (!existingUser) {
+            throw new common_1.NotFoundException('User not found');
         }
-        const user = await this.prisma.user.update({
-            where: { id: id.toString() },
-            data: updateAuthDto,
-            omit: { password: true },
+        const currentProfile = this.readUserProfile(existingUser.profile);
+        const normalizedNextEmail = (updateAuthDto.email ?? currentProfile.email).trim().toLowerCase();
+        if (normalizedNextEmail !== currentProfile.email) {
+            const duplicate = await this.findUserByEmail(normalizedNextEmail);
+            if (duplicate && duplicate.id !== id) {
+                throw new common_1.BadRequestException('Email already in use');
+            }
+        }
+        let nextPassword = currentProfile.password;
+        if (updateAuthDto.password) {
+            nextPassword = await bcrypt.hash(updateAuthDto.password, 10);
+        }
+        const nextProfile = this.buildRoleProfile({
+            email: normalizedNextEmail,
+            fullname: updateAuthDto.fullname ?? currentProfile.fullname,
+            avatar: updateAuthDto.avatar ?? currentProfile.avatar ?? null,
+            password: nextPassword,
+            role: updateAuthDto.role ?? currentProfile.role,
+            institution: updateAuthDto.institution ?? currentProfile.institution ?? null,
+            industry: updateAuthDto.industry ?? currentProfile.industry ?? null,
+            area_of_interest: updateAuthDto.area_of_interest ?? currentProfile.area_of_interest ?? null,
+            company_email: updateAuthDto.company_email ?? currentProfile.company_email ?? null,
+            is_verified: currentProfile.is_verified,
         });
-        return user;
+        const user = await this.prisma.user.update({
+            where: { id },
+            data: { profile: nextProfile },
+        });
+        return this.toPublicUser(user);
     }
     async remove(id) {
         const user = await this.prisma.user.delete({
-            where: { id: id.toString() },
-            omit: { password: true },
+            where: { id },
         });
-        return user;
+        return this.toPublicUser(user);
+    }
+    async requestOtp(dto) {
+        const email = dto.email.trim().toLowerCase();
+        const user = await this.findUserByEmail(email);
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        const currentProfile = this.readUserProfile(user.profile);
+        if (currentProfile.is_verified) {
+            throw new common_1.BadRequestException('User is already verified');
+        }
+        const otp = this.generateOtpCode();
+        const expiresAt = new Date(Date.now() + AuthService_1.OTP_TTL_MS);
+        const otpHash = await bcrypt.hash(otp, 10);
+        await this.prisma.userOtp.upsert({
+            where: { userId: user.id },
+            update: {
+                codeHash: otpHash,
+                expiresAt,
+                verifiedAt: null,
+            },
+            create: {
+                userId: user.id,
+                codeHash: otpHash,
+                expiresAt,
+            },
+        });
+        await this.mailService.sendOtpVerificationEmail({
+            to: email,
+            otp,
+            expiresAt,
+            fullname: currentProfile.fullname,
+        });
+        return {
+            message: 'OTP generated and sent successfully',
+            expires_at: expiresAt.toISOString(),
+        };
+    }
+    async verifyOtp(dto) {
+        const email = dto.email.trim().toLowerCase();
+        const user = await this.findUserByEmail(email);
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        const currentProfile = this.readUserProfile(user.profile);
+        if (currentProfile.is_verified) {
+            return { message: 'User is already verified' };
+        }
+        const otpRecord = await this.prisma.userOtp.findUnique({
+            where: { userId: user.id },
+        });
+        if (!otpRecord) {
+            throw new common_1.BadRequestException('OTP has not been requested');
+        }
+        if (otpRecord.verifiedAt) {
+            throw new common_1.BadRequestException('OTP has already been used');
+        }
+        if (Date.now() > otpRecord.expiresAt.getTime()) {
+            throw new common_1.BadRequestException('OTP has expired');
+        }
+        const isValidOtp = await bcrypt.compare(dto.otp, otpRecord.codeHash);
+        if (!isValidOtp) {
+            throw new common_1.BadRequestException('Invalid OTP');
+        }
+        const nextProfile = this.buildRoleProfile({
+            ...currentProfile,
+            is_verified: true,
+        });
+        await this.prisma.$transaction([
+            this.prisma.user.update({
+                where: { id: user.id },
+                data: { profile: nextProfile },
+            }),
+            this.prisma.userOtp.update({
+                where: { id: otpRecord.id },
+                data: { verifiedAt: new Date() },
+            }),
+        ]);
+        return { message: 'OTP verified successfully' };
     }
     async signInWithProviderCallback(provider, dto) {
-        if (dto.password !== dto.confirmPassword) {
-            throw new common_1.BadRequestException('Password and confirm password do not match');
-        }
         const tokens = await this.exchangeCodeForToken(provider, dto.code);
         const profile = await this.fetchProviderProfile(provider, tokens.accessToken);
         const payload = {
@@ -113,12 +224,8 @@ let AuthService = class AuthService {
             email: profile.email,
             fullname: profile.fullname,
             avatar: profile.avatar,
-            role: dto.role,
-            institution: dto.institution,
-            area_of_interest: dto.area_of_interest,
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
-            password: dto.password,
         };
         return this.upsertSocialProvider(provider, payload);
     }
@@ -227,37 +334,40 @@ let AuthService = class AuthService {
         };
     }
     async findOrCreateSocialUser(dto) {
-        const existingUser = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
+        const existingUser = await this.findUserByEmail(dto.email);
         if (existingUser) {
-            if (dto.avatar && existingUser.avatar !== dto.avatar) {
-                return this.prisma.user.update({
+            const existingProfile = this.readUserProfile(existingUser.profile);
+            if (dto.avatar && existingProfile.avatar !== dto.avatar) {
+                const updatedUser = await this.prisma.user.update({
                     where: { id: existingUser.id },
-                    data: { avatar: dto.avatar },
+                    data: {
+                        profile: {
+                            ...existingProfile,
+                            avatar: dto.avatar,
+                        },
+                    },
                 });
+                return updatedUser;
             }
             return existingUser;
         }
-        try {
-            return await this.prisma.user.create({
-                data: {
-                    email: dto.email,
-                    fullname: dto.fullname,
-                    password: await bcrypt.hash(dto.password ?? (0, crypto_1.randomUUID)(), 10),
-                    role: dto.role ?? enums_1.Role.STUDENT,
-                    institution: dto.institution,
-                    area_of_interest: dto.area_of_interest,
-                    avatar: dto.avatar,
-                },
-            });
-        }
-        catch (e) {
-            if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
-                throw new common_1.BadRequestException('Email already in use');
-            }
-            throw e;
-        }
+        const profile = this.buildRoleProfile({
+            email: dto.email,
+            fullname: dto.fullname,
+            avatar: dto.avatar ?? null,
+            password: await bcrypt.hash((0, crypto_1.randomUUID)(), 10),
+            role: enums_1.Role.STUDENT,
+            institution: 'Not provided',
+            industry: null,
+            area_of_interest: 'General',
+            company_email: null,
+            is_verified: true,
+        });
+        return this.prisma.user.create({
+            data: {
+                profile: profile,
+            },
+        });
     }
     async upsertSocialProvider(provider, dto) {
         const existingProvider = await this.prisma.authProvider.findUnique({
@@ -268,21 +378,26 @@ let AuthService = class AuthService {
                 },
             },
             include: {
-                user: { omit: { password: true } },
+                user: true,
             },
         });
         if (existingProvider) {
-            if (dto.avatar && existingProvider.user.avatar !== dto.avatar) {
-                return this.prisma.user.update({
+            const existingProfile = this.readUserProfile(existingProvider.user.profile);
+            if (dto.avatar && existingProfile.avatar !== dto.avatar) {
+                const updatedUser = await this.prisma.user.update({
                     where: { id: existingProvider.user.id },
-                    data: { avatar: dto.avatar },
-                    omit: { password: true },
+                    data: {
+                        profile: {
+                            ...existingProfile,
+                            avatar: dto.avatar,
+                        },
+                    },
                 });
+                return this.toPublicUser(updatedUser);
             }
-            return existingProvider.user;
+            return this.toPublicUser(existingProvider.user);
         }
-        const resolvedPayload = await this.resolveSocialSignInPayload(provider, dto);
-        const user = await this.findOrCreateSocialUser(resolvedPayload);
+        const user = await this.findOrCreateSocialUser(dto);
         await this.prisma.authProvider.upsert({
             where: {
                 userId_provider: {
@@ -291,45 +406,120 @@ let AuthService = class AuthService {
                 },
             },
             update: {
-                providerUserId: resolvedPayload.providerUserId,
-                accessToken: resolvedPayload.accessToken,
-                refreshToken: resolvedPayload.refreshToken,
+                providerUserId: dto.providerUserId,
+                accessToken: dto.accessToken,
+                refreshToken: dto.refreshToken,
             },
             create: {
                 userId: user.id,
                 provider,
-                providerUserId: resolvedPayload.providerUserId,
-                accessToken: resolvedPayload.accessToken,
-                refreshToken: resolvedPayload.refreshToken,
+                providerUserId: dto.providerUserId,
+                accessToken: dto.accessToken,
+                refreshToken: dto.refreshToken,
             },
         });
-        return this.prisma.user.findUnique({
+        const latestUser = await this.prisma.user.findUnique({
             where: { id: user.id },
-            omit: { password: true },
+        });
+        return latestUser ? this.toPublicUser(latestUser) : null;
+    }
+    async findUserByEmail(email) {
+        const normalizedEmail = email.trim().toLowerCase();
+        return this.prisma.user.findFirst({
+            where: {
+                profile: {
+                    path: ['email'],
+                    equals: normalizedEmail,
+                },
+            },
         });
     }
-    async resolveSocialSignInPayload(provider, dto) {
-        let { email, fullname, avatar } = dto;
-        if ((!email || !fullname || !avatar) && dto.accessToken) {
-            const profile = await this.fetchProviderProfile(provider, dto.accessToken);
-            email = email ?? profile.email;
-            fullname = fullname ?? profile.fullname;
-            avatar = avatar ?? profile.avatar;
-        }
-        if (!email || !fullname) {
-            throw new common_1.BadRequestException('Email and fullname are required for first-time social sign-in. Provide them directly or include accessToken.');
-        }
+    readUserProfile(profile) {
+        const value = (profile ?? {});
         return {
-            ...dto,
-            email,
-            fullname,
-            avatar,
+            email: value.email ?? '',
+            fullname: value.fullname ?? '',
+            avatar: value.avatar ?? null,
+            password: value.password ?? '',
+            role: value.role ?? enums_1.Role.STUDENT,
+            institution: value.institution ?? null,
+            industry: value.industry ?? null,
+            area_of_interest: value.area_of_interest ?? null,
+            company_email: value.company_email ?? null,
+            is_verified: value.is_verified ?? false,
+        };
+    }
+    buildRoleProfile(input) {
+        const profile = {
+            email: input.email.trim().toLowerCase(),
+            fullname: input.fullname.trim(),
+            avatar: this.normalizeOptionalText(input.avatar),
+            password: input.password,
+            role: input.role,
+            institution: this.normalizeOptionalText(input.institution),
+            industry: this.normalizeOptionalText(input.industry),
+            area_of_interest: this.normalizeOptionalText(input.area_of_interest),
+            company_email: this.normalizeOptionalEmail(input.company_email),
+            is_verified: input.is_verified ?? false,
+        };
+        if (!profile.area_of_interest) {
+            throw new common_1.BadRequestException('area_of_interest is required');
+        }
+        switch (profile.role) {
+            case enums_1.Role.STUDENT:
+                if (!profile.institution) {
+                    throw new common_1.BadRequestException('institution is required for STUDENT role');
+                }
+                profile.industry = null;
+                profile.company_email = null;
+                return profile;
+            case enums_1.Role.EDUCATOR:
+                if (!profile.institution) {
+                    throw new common_1.BadRequestException('institution is required for EDUCATOR role');
+                }
+                profile.industry = null;
+                profile.company_email = null;
+                return profile;
+            case enums_1.Role.COMPANY:
+                if (!profile.industry) {
+                    throw new common_1.BadRequestException('industry is required for COMPANY role');
+                }
+                if (!profile.company_email) {
+                    throw new common_1.BadRequestException('company_email is required for COMPANY role');
+                }
+                profile.institution = null;
+                return profile;
+            default:
+                throw new common_1.BadRequestException(`Unsupported role: ${profile.role}`);
+        }
+    }
+    normalizeOptionalText(value) {
+        if (typeof value !== 'string') {
+            return null;
+        }
+        const normalized = value.trim();
+        return normalized.length > 0 ? normalized : null;
+    }
+    normalizeOptionalEmail(value) {
+        const normalized = this.normalizeOptionalText(value);
+        return normalized ? normalized.toLowerCase() : null;
+    }
+    generateOtpCode() {
+        return (0, crypto_1.randomInt)(0, 1_000_000).toString().padStart(6, '0');
+    }
+    toPublicUser(user) {
+        const profile = this.readUserProfile(user.profile);
+        const { password: _password, ...publicProfile } = profile;
+        return {
+            id: user.id,
+            ...publicProfile,
         };
     }
 };
 exports.AuthService = AuthService;
-exports.AuthService = AuthService = __decorate([
+exports.AuthService = AuthService = AuthService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        mail_service_1.MailService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

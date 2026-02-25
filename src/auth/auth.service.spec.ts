@@ -103,108 +103,10 @@ describe('AuthService', () => {
   });
 
   describe('social sign-in', () => {
-    it('returns existing user when google provider already linked', async () => {
-      const dto = {
-        providerUserId: 'google-123',
-        email: 'a@b.com',
-        fullname: 'A B',
-      } as any;
-      const publicUser = { id: '1', email: 'a@b.com', fullname: 'A B', role: 'STUDENT' };
-
-      mockPrisma.authProvider.findUnique.mockResolvedValue({ user: publicUser });
-
-      const result = await service.signInWithProvider(AuthProviderType.GOOGLE, dto);
-
-      expect(mockPrisma.authProvider.findUnique).toHaveBeenCalledWith({
-        where: {
-          provider_providerUserId: {
-            provider: AuthProviderType.GOOGLE,
-            providerUserId: dto.providerUserId,
-          },
-        },
-        include: {
-          user: { omit: { password: true } },
-        },
-      });
-      expect(mockPrisma.authProvider.upsert).not.toHaveBeenCalled();
-      expect(result).toEqual(publicUser);
-    });
-
-    it('creates link for linkedin provider when not linked yet', async () => {
-      const dto = {
-        providerUserId: 'li-123',
-        email: 'new@user.com',
-        fullname: 'New User',
-        role: 'STUDENT',
-      } as any;
-
-      const createdUser = {
-        id: '2',
-        email: 'new@user.com',
-        fullname: 'New User',
-        password: 'hashed',
-        role: 'STUDENT',
-      };
-      const publicUser = {
-        id: '2',
-        email: 'new@user.com',
-        fullname: 'New User',
-        role: 'STUDENT',
-      };
-
-      mockPrisma.authProvider.findUnique.mockResolvedValue(null);
-      mockPrisma.user.findUnique
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(publicUser);
-      mockPrisma.user.create.mockResolvedValue(createdUser);
-      mockPrisma.authProvider.upsert.mockResolvedValue({});
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed');
-
-      const result = await service.signInWithProvider(AuthProviderType.LINKEDIN, dto);
-
-      expect(mockPrisma.authProvider.upsert).toHaveBeenCalledWith({
-        where: {
-          userId_provider: {
-            userId: '2',
-            provider: AuthProviderType.LINKEDIN,
-          },
-        },
-        update: {
-          providerUserId: dto.providerUserId,
-          accessToken: undefined,
-          refreshToken: undefined,
-        },
-        create: {
-          userId: '2',
-          provider: AuthProviderType.LINKEDIN,
-          providerUserId: dto.providerUserId,
-          accessToken: undefined,
-          refreshToken: undefined,
-        },
-      });
-      expect(result).toEqual(publicUser);
-    });
-
-    it('throws when callback password and confirm password do not match', async () => {
-      const dto = {
-        code: 'oauth-code-123',
-        password: 'strongPassword123',
-        confirmPassword: 'differentPassword123',
-      } as any;
-
-      await expect(service.signInWithProviderCallback(AuthProviderType.GOOGLE, dto)).rejects.toThrow(
-        'Password and confirm password do not match',
-      );
-      expect(mockPrisma.authProvider.findUnique).not.toHaveBeenCalled();
-      expect(mockFetch).not.toHaveBeenCalled();
-    });
-
-    it('uses callback password when creating a new social user', async () => {
+    it('creates a social user from OAuth callback profile', async () => {
       const dto = {
         code: 'oauth-code-456',
-        role: 'STUDENT',
-        password: 'strongPassword123',
-        confirmPassword: 'strongPassword123',
+        scope: 'openid profile email',
       } as any;
 
       const createdUser = {
@@ -248,17 +150,14 @@ describe('AuthService', () => {
 
       const result = await service.signInWithProviderCallback(AuthProviderType.LINKEDIN, dto);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith('strongPassword123', 10);
       expect(mockPrisma.user.create).toHaveBeenCalledWith({
-        data: {
+        data: expect.objectContaining({
           email: 'callback@user.com',
           fullname: 'Callback User',
           password: 'hashed',
           role: 'STUDENT',
-          institution: undefined,
-          area_of_interest: undefined,
           avatar: 'https://cdn.linkedin.com/avatar.jpg',
-        },
+        }),
       });
       expect(mockPrisma.authProvider.upsert).toHaveBeenCalledWith({
         where: {

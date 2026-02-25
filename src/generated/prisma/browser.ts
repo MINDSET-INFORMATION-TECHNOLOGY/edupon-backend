@@ -27,3 +27,8 @@ export type User = Prisma.UserModel
  * 
  */
 export type AuthProvider = Prisma.AuthProviderModel
+/**
+ * Model UserOtp
+ * 
+ */
+export type UserOtp = Prisma.UserOtpModel
