@@ -59,16 +59,37 @@ $ npm run test:cov
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## CI/CD
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+This repository uses GitHub Actions for CI and CD:
+
+- `CI` workflow (`.github/workflows/ci.yml`)
+  - Runs on push/PR to `main` and `dev`
+  - Runs type-checking and Prisma schema validation
+  - Runs unit tests and e2e tests
+  - Builds the app
+
+- `CD` workflow (`.github/workflows/cd.yml`)
+  - Runs on push to `main` (and manual dispatch)
+  - Builds and type-checks the app
+  - Triggers deployment via webhook
+
+### Deployment webhook setup
+
+Set this GitHub repository secret before using CD:
+
+- `DEPLOY_WEBHOOK_URL`: webhook endpoint from your hosting provider (for example Render/Railway/Fly/your custom deploy service)
+
+If `DEPLOY_WEBHOOK_URL` is not configured, the deploy job is skipped with a clear message.
+
+If you prefer Nest's managed path, see [Nest deployment docs](https://docs.nestjs.com/deployment).
+
+### Optional: Nest Mau
 
 ```bash
 $ npm install -g @nestjs/mau
 $ mau deploy
 ```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
 ## Resources
 
