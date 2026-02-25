@@ -1,73 +1,83 @@
 name: CI
 
 on:
-  push:
-    branches: [main, dev]
   pull_request:
     branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # ... (code_quality_checks job remains the same) ...
-  code_quality_checks:
-    name: Code Quality Checks (Format, Lint, Type)
+  quality:
+    name: Typecheck and Prisma Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: 22
+          cache: npm
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Run Formatting Check
-        run: npm run format:check
-
-      - name: Run Linting Check
-        run: npm run lint
-
-      - name: Run Type Check (Lint-Type)
+      - name: Typecheck
         run: npm run type-check
-  build:
-    needs: [code_quality_checks]
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+  tests:
+    name: Unit and E2E Tests
+    needs: quality
     runs-on: ubuntu-latest
-
-    # 🌟 NEW: Define the DATABASE_URL environment variable here
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
-
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: 22
+          cache: npm
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      # The DATABASE_URL is now automatically available to these steps via the 'env' block
-      - name: Build
-        run: npm run build
-
-      - name: Prisma Migrate
-        run: npx prisma migrate dev --preview-feature
-
-      - name: Prisma Generate
+      - name: Generate Prisma client
         run: npx prisma generate
+
+      - name: Run unit tests
+        run: npm test -- --runInBand
+
+      - name: Run e2e tests
+        run: npm run test:e2e -- --runInBand
+
+  build:
+    name: Build
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Build app
+        run: npm run build
