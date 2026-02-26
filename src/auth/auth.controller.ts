@@ -5,19 +5,27 @@ import {
   Post,
   Body,
   Query,
+  Req,
   Patch,
   Param,
   Delete,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-import { SocialSignInDto } from './dto/social-signin.dto';
+import { LoginDto } from './dto/login.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import {
+  GoogleSignInDto,
+  LinkedInSignInDto,
+  ProviderSignInDto,
+} from './dto/social-signin.dto';
 import { AuthProviderType } from '../generated/prisma/enums';
+import { plainToInstance } from 'class-transformer';
+import { validateOrReject } from 'class-validator';
 
 @ApiTags('Auth')
 @Controller('')
@@ -75,6 +83,43 @@ export class AuthController {
     return this.authService.create(createAuthDto);
   }
 
+  @Post('login')
+  @Throttle({ default: { limit: 6, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiBody({
+    type: LoginDto,
+    examples: {
+      default: {
+        summary: 'Standard email/password login',
+        value: {
+          email: 'alice@example.com',
+          password: 'strongPassword123',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'User authenticated successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid credentials.' })
+  @ApiResponse({ status: 429, description: 'Too many login attempts. Try again later.' })
+  login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
+
+  @Post('token/refresh')
+  @ApiOperation({ summary: 'Refresh access token using refresh token' })
+  @ApiResponse({ status: 201, description: 'Tokens refreshed successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired refresh token.' })
+  refreshToken(@Body() refreshTokenDto: LoginDto) {
+    return this.authService.refreshToken(refreshTokenDto);
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: 'Logout current session' })
+  @ApiResponse({ status: 201, description: 'User logged out successfully.' })
+  logout(@Req() req: any) {
+    return this.authService.logout(req);
+  }
+
   @Post('/otp/request')
   @Throttle({ default: { limit: 6, ttl: 60_000 } })
   @ApiOperation({ summary: 'Generate and send OTP for account verification' })
@@ -108,34 +153,52 @@ export class AuthController {
   @Get('oauth/:provider/callback')
   @ApiOperation({ summary: 'Handle provider callback: fetch profile and sign in' })
   @ApiParam({ name: 'provider', enum: ['google', 'linkedin'] })
+  @ApiQuery({ name: 'code', required: true, type: String, description: 'OAuth authorization code.' })
+  @ApiQuery({ name: 'scope', required: false, type: String })
+  @ApiQuery({ name: 'authuser', required: false, type: String, description: 'Google only.' })
+  @ApiQuery({ name: 'prompt', required: false, type: String, description: 'Google only.' })
   @ApiResponse({ status: 200, description: 'Provider callback handled successfully.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
-  signInWithProviderCallback(
+  async signInWithProviderCallback(
     @Param('provider') provider: string,
-    @Query() socialSignInDto: SocialSignInDto,
+    @Query() query: Record<string, any>,
   ) {
-    return this.authService.signInWithProviderCallback(this.parseProvider(provider), socialSignInDto);
+    const prov = this.parseProvider(provider);
+
+    // validate against provider-specific DTO
+    let dto: ProviderSignInDto;
+    if (prov === AuthProviderType.GOOGLE) {
+      const cast = plainToInstance(GoogleSignInDto, query);
+      await validateOrReject(cast, { whitelist: true, forbidNonWhitelisted: true });
+      dto = cast;
+    } else {
+      const cast = plainToInstance(LinkedInSignInDto, query);
+      await validateOrReject(cast, { whitelist: true, forbidNonWhitelisted: true });
+      dto = cast;
+    }
+
+    return this.authService.signInWithProviderCallback(prov, dto);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.authService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.authService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
+  //   return this.authService.update(+id, updateAuthDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.authService.remove(+id);
+  // }
 
   private parseProvider(provider: string): AuthProviderType {
     const normalized = provider.toUpperCase();

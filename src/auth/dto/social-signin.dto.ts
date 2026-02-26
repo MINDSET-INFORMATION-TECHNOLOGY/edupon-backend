@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class SocialSignInDto {
+export abstract class SocialSignInDto {
   @ApiProperty({ example: 'oauth-authorization-code' })
   @IsString()
   @IsNotEmpty()
@@ -11,9 +11,20 @@ export class SocialSignInDto {
   @IsOptional()
   @IsString()
   scope?: string;
+}
 
-  @ApiPropertyOptional({ example: 'state-token-from-initiation-step' })
+export class GoogleSignInDto extends SocialSignInDto {
+  @ApiPropertyOptional({ description: 'OpenID prompt value, e.g. consent' })
   @IsOptional()
   @IsString()
-  state?: string;
+  prompt?: string;
+
+  @ApiPropertyOptional({ description: 'Authuser index from Google' })
+  @IsOptional()
+  @IsString()
+  authuser?: string;
 }
+
+export class LinkedInSignInDto extends SocialSignInDto {}
+
+export type ProviderSignInDto = GoogleSignInDto | LinkedInSignInDto;
