@@ -14,7 +14,10 @@ jobs:
     name: Deploy Production
     runs-on: ubuntu-latest
     environment: production
+    # the job should only run when a webhook URL has been configured in secrets
     if: ${{ secrets.DEPLOY_WEBHOOK_URL != '' }}
+    env:
+      DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

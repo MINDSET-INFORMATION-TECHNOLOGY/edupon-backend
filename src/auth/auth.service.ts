@@ -4,8 +4,9 @@ import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthProviderType, Role } from '../generated/prisma/enums';
 import * as bcrypt from 'bcrypt';
-import { randomInt, randomUUID } from 'crypto';
-import { SocialSignInDto } from './dto/social-signin.dto';
+import { randomBytes, randomInt, randomUUID } from 'crypto';
+import { ProviderSignInDto } from './dto/social-signin.dto';
+import { LoginDto } from './dto/login.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { MailService } from '../mail/mail.service';
@@ -42,6 +43,8 @@ type UserProfileData = {
   area_of_interest: string | null;
   company_email: string | null;
   is_verified: boolean;
+  refresh_token_hash: string | null;
+  refresh_token_expires_at: string | null;
 };
 
 type RoleProfileInput = {
@@ -55,10 +58,26 @@ type RoleProfileInput = {
   area_of_interest?: string | null;
   company_email?: string | null;
   is_verified?: boolean;
+  refresh_token_hash?: string | null;
+  refresh_token_expires_at?: string | null;
 };
 
-type PublicUser = Omit<UserProfileData, 'password'> & {
+type PublicUser = Omit<UserProfileData, 'password' | 'refresh_token_hash' | 'refresh_token_expires_at'> & {
   id: number;
+};
+
+type AuthTokens = {
+  token_type: 'Bearer';
+  access_token: string;
+  expires_in: number;
+  refresh_token: string;
+  refresh_expires_in: number;
+  refresh_token_expires_at: string;
+};
+
+type AuthSessionResponse = {
+  user: PublicUser;
+  tokens: AuthTokens;
 };
 
 type SocialSignInPayload = {
@@ -73,6 +92,8 @@ type SocialSignInPayload = {
 @Injectable()
 export class AuthService {
   private static readonly OTP_TTL_MS = 5 * 60 * 1000;
+  private static readonly ACCESS_TOKEN_TTL_MS = 15 * 60 * 1000;
+  private static readonly REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
   constructor(
     private prisma: PrismaService,
@@ -105,6 +126,80 @@ export class AuthService {
     });
 
     return this.toPublicUser(user);
+  }
+
+  async login(dto: LoginDto): Promise<AuthSessionResponse> {
+    if (!dto.email || !dto.password) {
+      throw new BadRequestException('Invalid email or password');
+    }
+
+    const email = dto.email.trim().toLowerCase();
+    const user = await this.findUserByEmail(email);
+
+    if (!user) {
+      throw new BadRequestException('Invalid email or password');
+    }
+
+    const profile = this.readUserProfile(user.profile);
+    const isValidPassword = await bcrypt.compare(dto.password, profile.password);
+    if (!isValidPassword) {
+      throw new BadRequestException('Invalid email or password');
+    }
+
+    return this.issueAuthSession(user);
+  }
+
+  async refreshToken(dto: LoginDto): Promise<AuthSessionResponse> {
+    const refreshToken = dto.refresh_token?.trim();
+    if (!refreshToken) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+    const userId = this.extractUserIdFromRefreshToken(refreshToken);
+
+    if (!userId) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    const profile = this.readUserProfile(user.profile);
+    if (!profile.refresh_token_hash || !profile.refresh_token_expires_at) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    const refreshExpiresAt = Date.parse(profile.refresh_token_expires_at);
+    if (Number.isNaN(refreshExpiresAt) || Date.now() > refreshExpiresAt) {
+      throw new BadRequestException('Refresh token has expired');
+    }
+
+    const isValidRefreshToken = await bcrypt.compare(refreshToken, profile.refresh_token_hash);
+    if (!isValidRefreshToken) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    return this.issueAuthSession(user);
+  }
+
+  async logout(req?: any): Promise<{ message: string }> {
+    // If express-session is enabled, destroy the current session.
+    if (req?.session?.destroy) {
+      await new Promise<void>((resolve, reject) => {
+        req.session.destroy((err: unknown) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+    return { message: 'User logged out successfully' };
   }
 
   async findAll(): Promise<PublicUser[]> {
@@ -218,24 +313,31 @@ export class AuthService {
   }
 
   async verifyOtp(dto: VerifyOtpDto): Promise<{ message: string }> {
-    const email = dto.email.trim().toLowerCase();
-    const user = await this.findUserByEmail(email);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const currentProfile = this.readUserProfile(user.profile);
-    if (currentProfile.is_verified) {
-      return { message: 'User is already verified' };
-    }
-
-    const otpRecord = await this.prisma.userOtp.findUnique({
-      where: { userId: user.id },
+    const otpRecords = await this.prisma.userOtp.findMany({
+      include: { user: true },
     });
 
-    if (!otpRecord) {
+    if (otpRecords.length === 0) {
       throw new BadRequestException('OTP has not been requested');
     }
+
+    const matchingRecords: typeof otpRecords = [];
+    for (const otpRecord of otpRecords) {
+      const isValidOtp = await bcrypt.compare(dto.otp, otpRecord.codeHash);
+      if (isValidOtp) {
+        matchingRecords.push(otpRecord);
+      }
+    }
+
+    if (matchingRecords.length === 0) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    if (matchingRecords.length > 1) {
+      throw new BadRequestException('OTP is ambiguous. Please request a new OTP and try again');
+    }
+
+    const otpRecord = matchingRecords[0];
 
     if (otpRecord.verifiedAt) {
       throw new BadRequestException('OTP has already been used');
@@ -245,9 +347,9 @@ export class AuthService {
       throw new BadRequestException('OTP has expired');
     }
 
-    const isValidOtp = await bcrypt.compare(dto.otp, otpRecord.codeHash);
-    if (!isValidOtp) {
-      throw new BadRequestException('Invalid OTP');
+    const currentProfile = this.readUserProfile(otpRecord.user.profile);
+    if (currentProfile.is_verified) {
+      return { message: 'User is already verified' };
     }
 
     const nextProfile = this.buildRoleProfile({
@@ -257,7 +359,7 @@ export class AuthService {
 
     await this.prisma.$transaction([
       this.prisma.user.update({
-        where: { id: user.id },
+        where: { id: otpRecord.userId },
         data: { profile: nextProfile as any },
       }),
       this.prisma.userOtp.update({
@@ -269,7 +371,7 @@ export class AuthService {
     return { message: 'OTP verified successfully' };
   }
 
-  async signInWithProviderCallback(provider: AuthProviderType, dto: SocialSignInDto): Promise<PublicUser | null> {
+  async signInWithProviderCallback(provider: AuthProviderType, dto: ProviderSignInDto): Promise<PublicUser | null> {
     const tokens = await this.exchangeCodeForToken(provider, dto.code);
     const profile = await this.fetchProviderProfile(provider, tokens.accessToken);
 
@@ -349,9 +451,21 @@ export class AuthService {
     const tokenPayload = (await response.json().catch(() => ({}))) as any;
 
     if (!response.ok || !tokenPayload.access_token) {
-      throw new BadRequestException(
-        tokenPayload?.error_description ?? tokenPayload?.error ?? 'Failed to exchange OAuth code for access token',
-      );
+      // ensure error_description is a string; Google sometimes returns an
+      // array of messages which would otherwise become a JSON array in the
+      // exception payload (see reported issue).
+      let description: unknown = tokenPayload?.error_description;
+      if (Array.isArray(description)) {
+        description = description.join(', ');
+      }
+
+      throw new BadRequestException({
+        message:
+          (typeof description === 'string' && description) ||
+          tokenPayload?.error ||
+          'Failed to exchange OAuth code for access token',
+        error: tokenPayload?.error ?? 'Bad Request',
+      });
     }
 
     return {
@@ -368,7 +482,10 @@ export class AuthService {
       const payload = (await response.json().catch(() => ({}))) as any;
 
       if (!response.ok || !payload.sub || !payload.email) {
-        throw new BadRequestException('Failed to fetch Google user profile');
+        throw new BadRequestException({
+          message: 'Failed to fetch Google user profile',
+          error: 'Bad Request',
+        });
       }
 
       const fullname =
@@ -390,7 +507,10 @@ export class AuthService {
     const payload = (await response.json().catch(() => ({}))) as any;
 
     if (!response.ok || !payload.sub || !payload.email) {
-      throw new BadRequestException('Failed to fetch LinkedIn user profile');
+      throw new BadRequestException({
+        message: 'Failed to fetch LinkedIn user profile',
+        error: 'Bad Request',
+      });
     }
 
     const fullname =
@@ -541,6 +661,8 @@ export class AuthService {
       area_of_interest: value.area_of_interest ?? null,
       company_email: value.company_email ?? null,
       is_verified: value.is_verified ?? false,
+      refresh_token_hash: value.refresh_token_hash ?? null,
+      refresh_token_expires_at: value.refresh_token_expires_at ?? null,
     };
   }
 
@@ -556,6 +678,8 @@ export class AuthService {
       area_of_interest: this.normalizeOptionalText(input.area_of_interest),
       company_email: this.normalizeOptionalEmail(input.company_email),
       is_verified: input.is_verified ?? false,
+      refresh_token_hash: input.refresh_token_hash ?? null,
+      refresh_token_expires_at: input.refresh_token_expires_at ?? null,
     };
 
     if (!profile.area_of_interest) {
@@ -608,9 +732,61 @@ export class AuthService {
     return randomInt(0, 1_000_000).toString().padStart(6, '0');
   }
 
+  private async issueAuthSession(user: { id: number; profile: unknown }): Promise<AuthSessionResponse> {
+    const accessToken = this.generateAccessToken();
+    const refreshToken = this.generateRefreshToken(user.id);
+    const refreshTokenExpiresAt = new Date(Date.now() + AuthService.REFRESH_TOKEN_TTL_MS);
+
+    const currentProfile = this.readUserProfile(user.profile);
+    const nextProfile = this.buildRoleProfile({
+      ...currentProfile,
+      refresh_token_hash: await bcrypt.hash(refreshToken, 10),
+      refresh_token_expires_at: refreshTokenExpiresAt.toISOString(),
+    });
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { profile: nextProfile as any },
+    });
+
+    return {
+      user: this.toPublicUser(updatedUser),
+      tokens: {
+        token_type: 'Bearer',
+        access_token: accessToken,
+        expires_in: Math.floor(AuthService.ACCESS_TOKEN_TTL_MS / 1000),
+        refresh_token: refreshToken,
+        refresh_expires_in: Math.floor(AuthService.REFRESH_TOKEN_TTL_MS / 1000),
+        refresh_token_expires_at: refreshTokenExpiresAt.toISOString(),
+      },
+    };
+  }
+
+  private generateAccessToken(): string {
+    return randomBytes(32).toString('hex');
+  }
+
+  private generateRefreshToken(userId: number): string {
+    return `${userId}.${randomUUID()}.${randomBytes(32).toString('hex')}`;
+  }
+
+  private extractUserIdFromRefreshToken(token: string): number | null {
+    const [userIdPart] = token.split('.');
+    const parsed = Number(userIdPart);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      return null;
+    }
+    return parsed;
+  }
+
   private toPublicUser(user: { id: number; profile: unknown }): PublicUser {
     const profile = this.readUserProfile(user.profile);
-    const { password: _password, ...publicProfile } = profile;
+    const {
+      password: _password,
+      refresh_token_hash: _refreshTokenHash,
+      refresh_token_expires_at: _refreshTokenExpiresAt,
+      ...publicProfile
+    } = profile;
     return {
       id: user.id,
       ...publicProfile,
