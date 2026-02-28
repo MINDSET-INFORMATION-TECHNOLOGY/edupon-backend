@@ -47,7 +47,7 @@ import {
 } from './dto/social-signin.dto';
 import { AuthProviderType } from '../generated/prisma/enums';
 import { plainToInstance } from 'class-transformer';
-import { validateOrReject } from 'class-validator';
+import { validateOrReject, ValidationError } from 'class-validator';
 import {
   avatarDiskStorage,
   buildAvatarPublicUrl,
@@ -221,7 +221,22 @@ export class AuthController {
   @ApiQuery({ name: 'scope', required: false, type: String })
   @ApiQuery({ name: 'authuser', required: false, type: String, description: 'Google only.' })
   @ApiQuery({ name: 'prompt', required: false, type: String, description: 'Google only.' })
-  @ApiResponse({ status: 200, description: 'Provider callback handled successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Provider callback handled successfully.',
+    schema: {
+      type: 'object',
+      properties: {
+        role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
+        token: { type: 'string' },
+      },
+      required: ['role', 'token'],
+      example: {
+        role: 'STUDENT',
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      },
+    },
+  })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   async signInWithProviderCallback(
     @Param('provider') provider: string,
@@ -232,16 +247,21 @@ export class AuthController {
     // validate against provider-specific DTO
     let dto: ProviderSignInDto;
     if (prov === AuthProviderType.GOOGLE) {
-      const cast = plainToInstance(GoogleSignInDto, query);
-      await validateOrReject(cast, { whitelist: true, forbidNonWhitelisted: true });
-      dto = cast;
+      dto = await this.validateProviderQuery(GoogleSignInDto, query);
     } else {
-      const cast = plainToInstance(LinkedInSignInDto, query);
-      await validateOrReject(cast, { whitelist: true, forbidNonWhitelisted: true });
-      dto = cast;
+      dto = await this.validateProviderQuery(LinkedInSignInDto, query);
     }
 
-    return this.authService.signInWithProviderCallback(prov, dto);
+    const session = await this.authService.signInWithProviderCallback(prov, dto);
+
+    if (!session) {
+      throw new BadRequestException('Unable to sign in with provider');
+    }
+
+    return {
+      role: session.user.role,
+      token: session.tokens.access_token,
+    };
   }
 
   // @Get()
@@ -269,5 +289,30 @@ export class AuthController {
     if (normalized === AuthProviderType.GOOGLE) return AuthProviderType.GOOGLE;
     if (normalized === AuthProviderType.LINKEDIN) return AuthProviderType.LINKEDIN;
     throw new BadRequestException(`Unsupported provider: ${provider}`);
+  }
+
+  private async validateProviderQuery<T extends object>(
+    dtoClass: new () => T,
+    query: Record<string, any>,
+  ): Promise<T> {
+    const cast = plainToInstance(dtoClass, query);
+    try {
+      await validateOrReject(cast, { whitelist: true, forbidNonWhitelisted: false });
+      return cast;
+    } catch (error) {
+      throw new BadRequestException(this.formatValidationError(error));
+    }
+  }
+
+  private formatValidationError(error: unknown): string[] {
+    if (!Array.isArray(error)) {
+      return ['Invalid OAuth callback query parameters'];
+    }
+
+    const messages = (error as ValidationError[])
+      .flatMap((validationError) => Object.values(validationError.constraints ?? {}))
+      .filter((message) => typeof message === 'string');
+
+    return messages.length > 0 ? messages : ['Invalid OAuth callback query parameters'];
   }
 }

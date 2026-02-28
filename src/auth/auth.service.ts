@@ -459,18 +459,15 @@ export class AuthService {
 
   getProviderSignInUrl(provider: AuthProviderType) {
     const config = this.getProviderConfig(provider);
-    const state = randomUUID();
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: config.clientId,
       redirect_uri: config.callbackUrl,
       scope: config.scopes.join(' '),
-      state,
     });
 
     return {
       url: `${config.authorizationUrl}?${params.toString()}`,
-      state,
     };
   }
 

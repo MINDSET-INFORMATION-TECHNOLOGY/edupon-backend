@@ -17,6 +17,7 @@ jest.mock('./auth.service', () => ({
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -114,7 +115,7 @@ describe('AuthController', () => {
 
   describe('social sign-in', () => {
     it('should call service.getProviderSignInUrl and return URL', () => {
-      const response = { url: 'https://accounts.google.com/o/oauth2/v2/auth?foo=bar', state: 'state-123' };
+      const response = { url: 'https://accounts.google.com/o/oauth2/v2/auth?foo=bar' };
       jest.spyOn(service, 'getProviderSignInUrl').mockReturnValue(response as any);
 
       expect(controller.getProviderSignInUrl('google')).toEqual(response);
@@ -122,14 +123,24 @@ describe('AuthController', () => {
     });
 
     it('should call service.signInWithProviderCallback for Google and cast dto', async () => {
-      const query = { code: 'oauth-code-123', scope: 'openid email profile', authuser: '0', prompt: 'consent' };
-      const authenticated = {
+      const query = {
+        code: 'oauth-code-123',
+        scope: 'openid email profile',
+        authuser: '0',
+        prompt: 'consent',
+        state: 'provider-state-123',
+      };
+      const session = {
         user: { id: 1, email: 'google@example.com', fullname: 'Google User', role: 'STUDENT' },
         tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
       };
+      const authenticated = {
+        role: 'STUDENT',
+        token: 'jwt-token',
+      };
       const callbackSpy = jest
         .spyOn(service, 'signInWithProviderCallback')
-        .mockResolvedValue(authenticated as any);
+        .mockResolvedValue(session as any);
 
       await expect(controller.signInWithProviderCallback('google', query as any)).resolves.toEqual(authenticated);
       expect(callbackSpy).toHaveBeenCalledWith(
@@ -141,13 +152,17 @@ describe('AuthController', () => {
 
     it('should call service.signInWithProviderCallback for LinkedIn', async () => {
       const query = { code: 'li-code', scope: 'r_liteprofile r_emailaddress' };
-      const authenticated = {
+      const session = {
         user: { id: 2, email: 'li@example.com', fullname: 'LinkedIn User', role: 'STUDENT' },
         tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
       };
+      const authenticated = {
+        role: 'STUDENT',
+        token: 'jwt-token',
+      };
       const callbackSpy = jest
         .spyOn(service, 'signInWithProviderCallback')
-        .mockResolvedValue(authenticated as any);
+        .mockResolvedValue(session as any);
 
       await expect(controller.signInWithProviderCallback('linkedin', query as any)).resolves.toEqual(authenticated);
       expect(callbackSpy).toHaveBeenCalledWith(
@@ -155,6 +170,15 @@ describe('AuthController', () => {
         expect.objectContaining({ code: 'li-code', scope: 'r_liteprofile r_emailaddress' }),
       );
       expect(callbackSpy.mock.calls[0][1]).toBeInstanceOf(LinkedInSignInDto);
+    });
+
+    it('should throw BadRequestException when callback query is invalid', async () => {
+      const callbackSpy = jest.spyOn(service, 'signInWithProviderCallback');
+
+      await expect(controller.signInWithProviderCallback('google', {} as any)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(callbackSpy).not.toHaveBeenCalled();
     });
 
     it('should throw for unsupported provider', () => {

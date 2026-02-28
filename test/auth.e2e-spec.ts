@@ -16,13 +16,19 @@ describe('Auth registration (e2e)', () => {
   };
   const fakeGoogleAuthUrl = {
     url: 'https://accounts.google.com/o/oauth2/v2/auth?client_id=test-google-client',
-    state: 'google-state-123',
   };
   const fakeLinkedInAuthUrl = {
     url: 'https://www.linkedin.com/oauth/v2/authorization?client_id=test-linkedin-client',
-    state: 'linkedin-state-456',
   };
   const fakeGoogleCallbackUser = {
+    role: 'STUDENT',
+    token: 'google-jwt-token',
+  };
+  const fakeLinkedInCallbackUser = {
+    role: 'STUDENT',
+    token: 'linkedin-jwt-token',
+  };
+  const fakeGoogleCallbackSession = {
     user: {
       id: 1,
       email: 'google@example.com',
@@ -35,7 +41,7 @@ describe('Auth registration (e2e)', () => {
       expires_in: 900,
     },
   };
-  const fakeLinkedInCallbackUser = {
+  const fakeLinkedInCallbackSession = {
     user: {
       id: 2,
       email: 'linkedin@example.com',
@@ -89,9 +95,9 @@ describe('Auth registration (e2e)', () => {
     }),
     signInWithProviderCallback: jest.fn((provider: AuthProviderType) => {
       if (provider === AuthProviderType.GOOGLE) {
-        return Promise.resolve(fakeGoogleCallbackUser);
+        return Promise.resolve(fakeGoogleCallbackSession);
       }
-      return Promise.resolve(fakeLinkedInCallbackUser);
+      return Promise.resolve(fakeLinkedInCallbackSession);
     }),
   };
 
