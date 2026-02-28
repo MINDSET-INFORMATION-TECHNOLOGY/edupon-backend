@@ -2,10 +2,14 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthProviderType, Role } from '../generated/prisma/enums';
-import { SocialSignInDto } from './dto/social-signin.dto';
+import { ProviderSignInDto } from './dto/social-signin.dto';
+import { LoginDto } from './dto/login.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from '../mail/mail.service';
+import { TokenRevocationService } from './token-revocation.service';
 type UserProfileData = {
     email: string;
     fullname: string;
@@ -21,12 +25,31 @@ type UserProfileData = {
 type PublicUser = Omit<UserProfileData, 'password'> & {
     id: number;
 };
+type AuthTokens = {
+    token_type: 'Bearer';
+    access_token: string;
+    expires_in: number;
+};
+type AuthSessionResponse = {
+    user: PublicUser;
+    tokens: AuthTokens;
+};
+type LoginResponse = {
+    role: Role;
+    token: string;
+};
 export declare class AuthService {
     private prisma;
     private mailService;
+    private tokenRevocationService;
     private static readonly OTP_TTL_MS;
-    constructor(prisma: PrismaService, mailService: MailService);
+    private static readonly ACCESS_TOKEN_TTL_SECONDS;
+    constructor(prisma: PrismaService, mailService: MailService, tokenRevocationService: TokenRevocationService);
     create(createAuthDto: CreateAuthDto): Promise<PublicUser>;
+    login(dto: LoginDto): Promise<LoginResponse>;
+    logout(req?: any): Promise<{
+        message: string;
+    }>;
     findAll(): Promise<PublicUser[]>;
     findOne(id: number): Promise<PublicUser>;
     update(id: number, updateAuthDto: UpdateAuthDto): Promise<PublicUser>;
@@ -35,10 +58,16 @@ export declare class AuthService {
         message: string;
         expires_at: string;
     }>;
+    forgotPassword(dto: ForgotPasswordDto): Promise<{
+        message: string;
+    }>;
+    resetPassword(dto: ResetPasswordDto): Promise<{
+        message: string;
+    }>;
     verifyOtp(dto: VerifyOtpDto): Promise<{
         message: string;
     }>;
-    signInWithProviderCallback(provider: AuthProviderType, dto: SocialSignInDto): Promise<PublicUser | null>;
+    signInWithProviderCallback(provider: AuthProviderType, dto: ProviderSignInDto): Promise<AuthSessionResponse | null>;
     getProviderSignInUrl(provider: AuthProviderType): {
         url: string;
         state: `${string}-${string}-${string}-${string}-${string}`;
@@ -55,6 +84,10 @@ export declare class AuthService {
     private normalizeOptionalText;
     private normalizeOptionalEmail;
     private generateOtpCode;
+    private issueAuthSession;
+    private generateAccessToken;
+    private getJwtSecret;
+    private finalizeLocalAvatarFilename;
     private toPublicUser;
 }
 export {};

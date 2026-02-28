@@ -9,6 +9,13 @@ type SendOtpMailInput = {
   fullname?: string;
 };
 
+type SendPasswordResetMailInput = {
+  to: string;
+  otp: string;
+  expiresAt: Date;
+  fullname?: string;
+};
+
 @Injectable()
 export class MailService {
   private transporter: Transporter | null = null;
@@ -20,21 +27,56 @@ export class MailService {
     const greetingName = input.fullname?.trim() || 'there';
     const expiryTime = input.expiresAt.toISOString();
 
-    const text = [
-      `Hello ${greetingName},`,
-      '',
-      `Your verification code is: ${input.otp}`,
-      '',
-      `This code expires at ${expiryTime} and is valid for up to 5 minutes.`,
-      '',
-      `If you did not request this code, ignore this email.`,
-    ].join('\n');
+    const text = this.buildCodeEmailText({
+      greetingName,
+      code: input.otp,
+      codeLabel: 'verification code',
+      expiryTime,
+      ignoreMessage: 'If you did not request this code, ignore this email.',
+    });
 
-    const html = this.renderOtpTemplate({
+    const html = this.renderCodeTemplate({
       appName,
       greetingName,
-      otp: input.otp,
+      code: input.otp,
+      codeLabel: 'verification code',
       expiryTime,
+      ignoreMessage: 'If you did not request this code, ignore this email.',
+      renderErrorMessage: 'Failed to render OTP email template',
+    });
+
+    await this.getTransporter().sendMail({
+      from,
+      to: input.to,
+      subject,
+      text,
+      html,
+    });
+  }
+
+  async sendPasswordResetEmail(input: SendPasswordResetMailInput): Promise<void> {
+    const from = this.getRequiredEnv('MAIL_FROM');
+    const appName = process.env.MAIL_APP_NAME?.trim() || 'Edupon';
+    const subject = process.env.MAIL_PASSWORD_RESET_SUBJECT?.trim() || `${appName} Password Reset`;
+    const greetingName = input.fullname?.trim() || 'there';
+    const expiryTime = input.expiresAt.toISOString();
+
+    const text = this.buildCodeEmailText({
+      greetingName,
+      code: input.otp,
+      codeLabel: 'password reset code',
+      expiryTime,
+      ignoreMessage: 'If you did not request this reset, ignore this email.',
+    });
+
+    const html = this.renderCodeTemplate({
+      appName,
+      greetingName,
+      code: input.otp,
+      codeLabel: 'password reset code',
+      expiryTime,
+      ignoreMessage: 'If you did not request this reset, ignore this email.',
+      renderErrorMessage: 'Failed to render password reset email template',
     });
 
     await this.getTransporter().sendMail({
@@ -70,11 +112,32 @@ export class MailService {
     return this.transporter;
   }
 
-  private renderOtpTemplate(input: {
+  private buildCodeEmailText(input: {
+    greetingName: string;
+    code: string;
+    codeLabel: string;
+    expiryTime: string;
+    ignoreMessage: string;
+  }): string {
+    return [
+      `Hello ${input.greetingName},`,
+      '',
+      `Your ${input.codeLabel} is: ${input.code}`,
+      '',
+      `This code expires at ${input.expiryTime} and is valid for up to 5 minutes.`,
+      '',
+      input.ignoreMessage,
+    ].join('\n');
+  }
+
+  private renderCodeTemplate(input: {
     appName: string;
     greetingName: string;
-    otp: string;
+    code: string;
+    codeLabel: string;
     expiryTime: string;
+    ignoreMessage: string;
+    renderErrorMessage: string;
   }): string {
     const mjmlTemplate = `
       <mjml>
@@ -92,16 +155,16 @@ export class MailService {
                 Hello ${this.escapeHtml(input.greetingName)},
               </mj-text>
               <mj-text color="#000000" font-size="16px">
-                Your verification code is:
+                Your ${this.escapeHtml(input.codeLabel)} is:
               </mj-text>
               <mj-text align="center" color="#000000" font-size="28px" font-weight="700">
-                ${this.escapeHtml(input.otp)}
+                ${this.escapeHtml(input.code)}
               </mj-text>
               <mj-text color="#000000" font-size="14px">
                 This code expires at ${this.escapeHtml(input.expiryTime)} and is valid for up to 5 minutes.
               </mj-text>
               <mj-text color="#000000" font-size="14px">
-                If you did not request this code, ignore this email.
+                ${this.escapeHtml(input.ignoreMessage)}
               </mj-text>
             </mj-column>
           </mj-section>
@@ -111,7 +174,7 @@ export class MailService {
 
     const rendered = mjml2html(mjmlTemplate, { validationLevel: 'strict' });
     if (rendered.errors.length > 0) {
-      throw new InternalServerErrorException('Failed to render OTP email template');
+      throw new InternalServerErrorException(input.renderErrorMessage);
     }
 
     return rendered.html;

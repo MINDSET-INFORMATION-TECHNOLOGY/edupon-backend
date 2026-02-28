@@ -13,16 +13,9 @@ exports.VerifyOtpDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class VerifyOtpDto {
-    email;
     otp;
 }
 exports.VerifyOtpDto = VerifyOtpDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'alice@example.com' }),
-    (0, class_validator_1.IsEmail)({}, { message: 'Please provide a valid email address' }),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], VerifyOtpDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '123456', description: '6-digit OTP code' }),
     (0, class_validator_1.Matches)(/^\d{6}$/, { message: 'otp must be a 6-digit numeric code' }),

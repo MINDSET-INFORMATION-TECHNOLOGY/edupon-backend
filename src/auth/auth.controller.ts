@@ -9,15 +9,37 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+  ApiQuery,
+  ApiExtraModels,
+  ApiConsumes,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import {
+  CompanyRegisterDto,
+  EducatorRegisterDto,
+  StudentRegisterDto,
+} from './dto/register-role.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import {
   GoogleSignInDto,
   LinkedInSignInDto,
@@ -26,6 +48,13 @@ import {
 import { AuthProviderType } from '../generated/prisma/enums';
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
+import {
+  avatarDiskStorage,
+  buildAvatarPublicUrl,
+  isAllowedAvatarMimeType,
+  MAX_AVATAR_FILE_SIZE,
+  resolveLocalUploadBaseUrl,
+} from '../files/local-upload.config';
 
 @ApiTags('Auth')
 @Controller('')
@@ -34,88 +63,104 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new account' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      storage: avatarDiskStorage,
+      limits: { fileSize: MAX_AVATAR_FILE_SIZE },
+      fileFilter: (_req, file, callback) => {
+        if (!isAllowedAvatarMimeType(file.mimetype)) {
+          callback(new BadRequestException('Unsupported avatar file type'), false);
+          return;
+        }
+
+        callback(null, true);
+      },
+    }),
+  )
+  @ApiExtraModels(StudentRegisterDto, EducatorRegisterDto, CompanyRegisterDto)
   @ApiBody({
-    type: CreateAuthDto,
-    description: 'Role-based registration payload.',
-    examples: {
-      student: {
-        summary: 'Student',
-        value: {
-          email: 'student@example.com',
-          fullname: 'Student User',
-          avatar: 'https://example.com/avatars/student.jpg',
-          password: 'strongPassword123',
-          role: 'STUDENT',
-          institution: 'Some University',
-          area_of_interest: 'Computer Science',
+    description:
+      'Role-based registration payload. Send as multipart/form-data. Optional avatar file field name: avatar.',
+    schema: {
+      oneOf: [
+        {
+          $ref: getSchemaPath(StudentRegisterDto),
         },
-      },
-      educator: {
-        summary: 'Educator',
-        value: {
-          email: 'educator@example.com',
-          fullname: 'Educator User',
-          avatar: 'https://example.com/avatars/educator.jpg',
-          password: 'strongPassword123',
-          role: 'EDUCATOR',
-          institution: 'Some University',
-          area_of_interest: 'AI and Education',
+        {
+          $ref: getSchemaPath(EducatorRegisterDto),
         },
-      },
-      company: {
-        summary: 'Company',
-        value: {
-          email: 'company@example.com',
-          company_email: 'contact@acme.com',
-          fullname: 'Company Admin',
-          avatar: 'https://example.com/avatars/company.jpg',
-          password: 'strongPassword123',
-          role: 'COMPANY',
-          industry: 'Information Technology',
-          area_of_interest: 'Corporate Learning',
+        {
+          $ref: getSchemaPath(CompanyRegisterDto),
+        },
+      ],
+      discriminator: {
+        propertyName: 'role',
+        mapping: {
+          STUDENT: getSchemaPath(StudentRegisterDto),
+          EDUCATOR: getSchemaPath(EducatorRegisterDto),
+          COMPANY: getSchemaPath(CompanyRegisterDto),
         },
       },
     },
   })
   @ApiResponse({ status: 201, description: 'The account has been successfully created.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
-  create(@Body() createAuthDto: CreateAuthDto) {
+  create(
+    @Body() createAuthDto: CreateAuthDto,
+    @UploadedFile() avatarFile?: { filename?: string },
+    @Req() req?: { protocol?: string; get?: (name: string) => string },
+  ) {
+    if (avatarFile?.filename) {
+      createAuthDto.avatar = buildAvatarPublicUrl(
+        avatarFile.filename,
+        resolveLocalUploadBaseUrl(req),
+      );
+    }
+
     return this.authService.create(createAuthDto);
   }
 
   @Post('login')
   @Throttle({ default: { limit: 6, ttl: 60_000 } })
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiBody({
-    type: LoginDto,
-    examples: {
-      default: {
-        summary: 'Standard email/password login',
-        value: {
-          email: 'alice@example.com',
-          password: 'strongPassword123',
-        },
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({
+    status: 201,
+    description: 'User authenticated successfully.',
+    schema: {
+      type: 'object',
+      properties: {
+        role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
+        token: { type: 'string' },
+      },
+      required: ['role', 'token'],
+      example: {
+        role: 'STUDENT',
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'User authenticated successfully.' })
   @ApiResponse({ status: 400, description: 'Invalid credentials.' })
   @ApiResponse({ status: 429, description: 'Too many login attempts. Try again later.' })
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
-  @Post('token/refresh')
-  @ApiOperation({ summary: 'Refresh access token using refresh token' })
-  @ApiResponse({ status: 201, description: 'Tokens refreshed successfully.' })
-  @ApiResponse({ status: 400, description: 'Invalid or expired refresh token.' })
-  refreshToken(@Body() refreshTokenDto: LoginDto) {
-    return this.authService.refreshToken(refreshTokenDto);
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get authenticated user from JWT access token' })
+  @ApiResponse({ status: 200, description: 'Authenticated user details from token.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  me(@Req() req: any) {
+    return req.user;
   }
 
   @Post('logout')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Logout current session' })
-  @ApiResponse({ status: 201, description: 'User logged out successfully.' })
+  @ApiResponse({ status: 200, description: 'User logged out successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   logout(@Req() req: any) {
     return this.authService.logout(req);
   }
@@ -139,6 +184,25 @@ export class AuthController {
   @ApiResponse({ status: 404, description: 'User not found.' })
   verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
     return this.authService.verifyOtp(verifyOtpDto);
+  }
+
+  @Post('/password/forgot')
+  @Throttle({ default: { limit: 6, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Request password reset code' })
+  @ApiResponse({ status: 200, description: 'Password reset code request accepted.' })
+  @ApiResponse({ status: 429, description: 'Too many password reset requests. Try again later.' })
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('/password/reset')
+  @Throttle({ default: { limit: 6, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Reset password with email and reset code' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired reset code.' })
+  @ApiResponse({ status: 429, description: 'Too many password reset attempts. Try again later.' })
+  resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 
   @Get('oauth/:provider')

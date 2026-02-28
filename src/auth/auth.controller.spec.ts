@@ -2,10 +2,11 @@ jest.mock('./auth.service', () => ({
   AuthService: class {
     create = jest.fn();
     login = jest.fn();
-    refreshToken = jest.fn();
     logout = jest.fn();
     requestOtp = jest.fn();
     verifyOtp = jest.fn();
+    forgotPassword = jest.fn();
+    resetPassword = jest.fn();
     getProviderSignInUrl = jest.fn();
     signInWithProviderCallback = jest.fn();
     findAll = jest.fn();
@@ -64,12 +65,15 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should call service.login and return user', async () => {
+    it('should call service.login and return role/token response', async () => {
       const dto: LoginDto = {
         email: 'test@example.com',
         password: 'password123',
       };
-      const loggedInUser = { id: 1, email: 'test@example.com', fullname: 'Test User', role: 'STUDENT' };
+      const loggedInUser = {
+        role: 'STUDENT',
+        token: 'jwt-token',
+      };
       jest.spyOn(service, 'login').mockResolvedValue(loggedInUser as any);
 
       await expect(controller.login(dto)).resolves.toEqual(loggedInUser);
@@ -88,19 +92,23 @@ describe('AuthController', () => {
     });
   });
 
-  describe('refresh token', () => {
-    it('should call service.refreshToken and return tokens', async () => {
-      const dto: LoginDto = {
-        refresh_token: '1.token-payload',
-      };
-      const refreshed = {
-        user: { id: 1, email: 'test@example.com', fullname: 'Test User', role: 'STUDENT' },
-        tokens: { access_token: 'new-access', refresh_token: 'new-refresh' },
-      };
-      jest.spyOn(service, 'refreshToken').mockResolvedValue(refreshed as any);
+  describe('password reset', () => {
+    it('should call service.forgotPassword and return response', async () => {
+      const dto = { email: 'test@example.com' } as any;
+      const response = { message: 'If an account exists with this email, a reset code has been sent' };
+      jest.spyOn(service, 'forgotPassword').mockResolvedValue(response as any);
 
-      await expect(controller.refreshToken(dto)).resolves.toEqual(refreshed);
-      expect(service.refreshToken).toHaveBeenCalledWith(dto);
+      await expect(controller.forgotPassword(dto)).resolves.toEqual(response);
+      expect(service.forgotPassword).toHaveBeenCalledWith(dto);
+    });
+
+    it('should call service.resetPassword and return response', async () => {
+      const dto = { email: 'test@example.com', otp: '123456', new_password: 'newPassword123' } as any;
+      const response = { message: 'Password reset successfully' };
+      jest.spyOn(service, 'resetPassword').mockResolvedValue(response as any);
+
+      await expect(controller.resetPassword(dto)).resolves.toEqual(response);
+      expect(service.resetPassword).toHaveBeenCalledWith(dto);
     });
   });
 
@@ -115,7 +123,10 @@ describe('AuthController', () => {
 
     it('should call service.signInWithProviderCallback for Google and cast dto', async () => {
       const query = { code: 'oauth-code-123', scope: 'openid email profile', authuser: '0', prompt: 'consent' };
-      const authenticated = { id: '1', email: 'google@example.com', fullname: 'Google User', role: 'STUDENT' };
+      const authenticated = {
+        user: { id: 1, email: 'google@example.com', fullname: 'Google User', role: 'STUDENT' },
+        tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
+      };
       const callbackSpy = jest
         .spyOn(service, 'signInWithProviderCallback')
         .mockResolvedValue(authenticated as any);
@@ -130,7 +141,10 @@ describe('AuthController', () => {
 
     it('should call service.signInWithProviderCallback for LinkedIn', async () => {
       const query = { code: 'li-code', scope: 'r_liteprofile r_emailaddress' };
-      const authenticated = { id: '2', email: 'li@example.com', fullname: 'LinkedIn User', role: 'STUDENT' };
+      const authenticated = {
+        user: { id: 2, email: 'li@example.com', fullname: 'LinkedIn User', role: 'STUDENT' },
+        tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
+      };
       const callbackSpy = jest
         .spyOn(service, 'signInWithProviderCallback')
         .mockResolvedValue(authenticated as any);

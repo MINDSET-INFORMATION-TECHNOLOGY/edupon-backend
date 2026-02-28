@@ -44,6 +44,35 @@ let MailService = class MailService {
             html,
         });
     }
+    async sendPasswordResetEmail(input) {
+        const from = this.getRequiredEnv('MAIL_FROM');
+        const appName = process.env.MAIL_APP_NAME?.trim() || 'Edupon';
+        const subject = process.env.MAIL_PASSWORD_RESET_SUBJECT?.trim() || `${appName} Password Reset`;
+        const greetingName = input.fullname?.trim() || 'there';
+        const expiryTime = input.expiresAt.toISOString();
+        const text = [
+            `Hello ${greetingName},`,
+            '',
+            `Your password reset code is: ${input.otp}`,
+            '',
+            `This code expires at ${expiryTime} and is valid for up to 5 minutes.`,
+            '',
+            `If you did not request this reset, ignore this email.`,
+        ].join('\n');
+        const html = this.renderPasswordResetTemplate({
+            appName,
+            greetingName,
+            otp: input.otp,
+            expiryTime,
+        });
+        await this.getTransporter().sendMail({
+            from,
+            to: input.to,
+            subject,
+            text,
+            html,
+        });
+    }
     getTransporter() {
         if (this.transporter) {
             return this.transporter;
@@ -100,6 +129,45 @@ let MailService = class MailService {
         const rendered = (0, mjml_1.default)(mjmlTemplate, { validationLevel: 'strict' });
         if (rendered.errors.length > 0) {
             throw new common_1.InternalServerErrorException('Failed to render OTP email template');
+        }
+        return rendered.html;
+    }
+    renderPasswordResetTemplate(input) {
+        const mjmlTemplate = `
+      <mjml>
+        <mj-body background-color="#ffffff">
+          <mj-section background-color="#0b5ed7" padding="20px">
+            <mj-column>
+              <mj-text align="center" color="#ffffff" font-size="22px" font-weight="700">
+                ${this.escapeHtml(input.appName)}
+              </mj-text>
+            </mj-column>
+          </mj-section>
+          <mj-section background-color="#ffffff" padding="24px">
+            <mj-column>
+              <mj-text color="#000000" font-size="16px">
+                Hello ${this.escapeHtml(input.greetingName)},
+              </mj-text>
+              <mj-text color="#000000" font-size="16px">
+                Your password reset code is:
+              </mj-text>
+              <mj-text align="center" color="#000000" font-size="28px" font-weight="700">
+                ${this.escapeHtml(input.otp)}
+              </mj-text>
+              <mj-text color="#000000" font-size="14px">
+                This code expires at ${this.escapeHtml(input.expiryTime)} and is valid for up to 5 minutes.
+              </mj-text>
+              <mj-text color="#000000" font-size="14px">
+                If you did not request this reset, ignore this email.
+              </mj-text>
+            </mj-column>
+          </mj-section>
+        </mj-body>
+      </mjml>
+    `;
+        const rendered = (0, mjml_1.default)(mjmlTemplate, { validationLevel: 'strict' });
+        if (rendered.errors.length > 0) {
+            throw new common_1.InternalServerErrorException('Failed to render password reset email template');
         }
         return rendered.html;
     }

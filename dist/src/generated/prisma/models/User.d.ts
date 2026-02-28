@@ -106,6 +106,7 @@ export type UserWhereInput = {
     updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string;
     authProviders?: Prisma.AuthProviderListRelationFilter;
     otpVerification?: Prisma.XOR<Prisma.UserOtpNullableScalarRelationFilter, Prisma.UserOtpWhereInput> | null;
+    passwordReset?: Prisma.XOR<Prisma.UserPasswordResetNullableScalarRelationFilter, Prisma.UserPasswordResetWhereInput> | null;
 };
 export type UserOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -114,6 +115,7 @@ export type UserOrderByWithRelationInput = {
     updatedAt?: Prisma.SortOrder;
     authProviders?: Prisma.AuthProviderOrderByRelationAggregateInput;
     otpVerification?: Prisma.UserOtpOrderByWithRelationInput;
+    passwordReset?: Prisma.UserPasswordResetOrderByWithRelationInput;
 };
 export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: number;
@@ -125,6 +127,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
     updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string;
     authProviders?: Prisma.AuthProviderListRelationFilter;
     otpVerification?: Prisma.XOR<Prisma.UserOtpNullableScalarRelationFilter, Prisma.UserOtpWhereInput> | null;
+    passwordReset?: Prisma.XOR<Prisma.UserPasswordResetNullableScalarRelationFilter, Prisma.UserPasswordResetWhereInput> | null;
 }, "id">;
 export type UserOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -152,6 +155,7 @@ export type UserCreateInput = {
     updatedAt?: Date | string;
     authProviders?: Prisma.AuthProviderCreateNestedManyWithoutUserInput;
     otpVerification?: Prisma.UserOtpCreateNestedOneWithoutUserInput;
+    passwordReset?: Prisma.UserPasswordResetCreateNestedOneWithoutUserInput;
 };
 export type UserUncheckedCreateInput = {
     id?: number;
@@ -160,6 +164,7 @@ export type UserUncheckedCreateInput = {
     updatedAt?: Date | string;
     authProviders?: Prisma.AuthProviderUncheckedCreateNestedManyWithoutUserInput;
     otpVerification?: Prisma.UserOtpUncheckedCreateNestedOneWithoutUserInput;
+    passwordReset?: Prisma.UserPasswordResetUncheckedCreateNestedOneWithoutUserInput;
 };
 export type UserUpdateInput = {
     profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
@@ -167,6 +172,7 @@ export type UserUpdateInput = {
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: Prisma.AuthProviderUpdateManyWithoutUserNestedInput;
     otpVerification?: Prisma.UserOtpUpdateOneWithoutUserNestedInput;
+    passwordReset?: Prisma.UserPasswordResetUpdateOneWithoutUserNestedInput;
 };
 export type UserUncheckedUpdateInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
@@ -175,6 +181,7 @@ export type UserUncheckedUpdateInput = {
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: Prisma.AuthProviderUncheckedUpdateManyWithoutUserNestedInput;
     otpVerification?: Prisma.UserOtpUncheckedUpdateOneWithoutUserNestedInput;
+    passwordReset?: Prisma.UserPasswordResetUncheckedUpdateOneWithoutUserNestedInput;
 };
 export type UserCreateManyInput = {
     id?: number;
@@ -253,11 +260,24 @@ export type UserUpdateOneRequiredWithoutOtpVerificationNestedInput = {
     connect?: Prisma.UserWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOtpVerificationInput, Prisma.UserUpdateWithoutOtpVerificationInput>, Prisma.UserUncheckedUpdateWithoutOtpVerificationInput>;
 };
+export type UserCreateNestedOneWithoutPasswordResetInput = {
+    create?: Prisma.XOR<Prisma.UserCreateWithoutPasswordResetInput, Prisma.UserUncheckedCreateWithoutPasswordResetInput>;
+    connectOrCreate?: Prisma.UserCreateOrConnectWithoutPasswordResetInput;
+    connect?: Prisma.UserWhereUniqueInput;
+};
+export type UserUpdateOneRequiredWithoutPasswordResetNestedInput = {
+    create?: Prisma.XOR<Prisma.UserCreateWithoutPasswordResetInput, Prisma.UserUncheckedCreateWithoutPasswordResetInput>;
+    connectOrCreate?: Prisma.UserCreateOrConnectWithoutPasswordResetInput;
+    upsert?: Prisma.UserUpsertWithoutPasswordResetInput;
+    connect?: Prisma.UserWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPasswordResetInput, Prisma.UserUpdateWithoutPasswordResetInput>, Prisma.UserUncheckedUpdateWithoutPasswordResetInput>;
+};
 export type UserCreateWithoutAuthProvidersInput = {
     profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     otpVerification?: Prisma.UserOtpCreateNestedOneWithoutUserInput;
+    passwordReset?: Prisma.UserPasswordResetCreateNestedOneWithoutUserInput;
 };
 export type UserUncheckedCreateWithoutAuthProvidersInput = {
     id?: number;
@@ -265,6 +285,7 @@ export type UserUncheckedCreateWithoutAuthProvidersInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     otpVerification?: Prisma.UserOtpUncheckedCreateNestedOneWithoutUserInput;
+    passwordReset?: Prisma.UserPasswordResetUncheckedCreateNestedOneWithoutUserInput;
 };
 export type UserCreateOrConnectWithoutAuthProvidersInput = {
     where: Prisma.UserWhereUniqueInput;
@@ -284,6 +305,7 @@ export type UserUpdateWithoutAuthProvidersInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     otpVerification?: Prisma.UserOtpUpdateOneWithoutUserNestedInput;
+    passwordReset?: Prisma.UserPasswordResetUpdateOneWithoutUserNestedInput;
 };
 export type UserUncheckedUpdateWithoutAuthProvidersInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
@@ -291,12 +313,14 @@ export type UserUncheckedUpdateWithoutAuthProvidersInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     otpVerification?: Prisma.UserOtpUncheckedUpdateOneWithoutUserNestedInput;
+    passwordReset?: Prisma.UserPasswordResetUncheckedUpdateOneWithoutUserNestedInput;
 };
 export type UserCreateWithoutOtpVerificationInput = {
     profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: Prisma.AuthProviderCreateNestedManyWithoutUserInput;
+    passwordReset?: Prisma.UserPasswordResetCreateNestedOneWithoutUserInput;
 };
 export type UserUncheckedCreateWithoutOtpVerificationInput = {
     id?: number;
@@ -304,6 +328,7 @@ export type UserUncheckedCreateWithoutOtpVerificationInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: Prisma.AuthProviderUncheckedCreateNestedManyWithoutUserInput;
+    passwordReset?: Prisma.UserPasswordResetUncheckedCreateNestedOneWithoutUserInput;
 };
 export type UserCreateOrConnectWithoutOtpVerificationInput = {
     where: Prisma.UserWhereUniqueInput;
@@ -323,6 +348,7 @@ export type UserUpdateWithoutOtpVerificationInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: Prisma.AuthProviderUpdateManyWithoutUserNestedInput;
+    passwordReset?: Prisma.UserPasswordResetUpdateOneWithoutUserNestedInput;
 };
 export type UserUncheckedUpdateWithoutOtpVerificationInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
@@ -330,6 +356,50 @@ export type UserUncheckedUpdateWithoutOtpVerificationInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: Prisma.AuthProviderUncheckedUpdateManyWithoutUserNestedInput;
+    passwordReset?: Prisma.UserPasswordResetUncheckedUpdateOneWithoutUserNestedInput;
+};
+export type UserCreateWithoutPasswordResetInput = {
+    profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    authProviders?: Prisma.AuthProviderCreateNestedManyWithoutUserInput;
+    otpVerification?: Prisma.UserOtpCreateNestedOneWithoutUserInput;
+};
+export type UserUncheckedCreateWithoutPasswordResetInput = {
+    id?: number;
+    profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    authProviders?: Prisma.AuthProviderUncheckedCreateNestedManyWithoutUserInput;
+    otpVerification?: Prisma.UserOtpUncheckedCreateNestedOneWithoutUserInput;
+};
+export type UserCreateOrConnectWithoutPasswordResetInput = {
+    where: Prisma.UserWhereUniqueInput;
+    create: Prisma.XOR<Prisma.UserCreateWithoutPasswordResetInput, Prisma.UserUncheckedCreateWithoutPasswordResetInput>;
+};
+export type UserUpsertWithoutPasswordResetInput = {
+    update: Prisma.XOR<Prisma.UserUpdateWithoutPasswordResetInput, Prisma.UserUncheckedUpdateWithoutPasswordResetInput>;
+    create: Prisma.XOR<Prisma.UserCreateWithoutPasswordResetInput, Prisma.UserUncheckedCreateWithoutPasswordResetInput>;
+    where?: Prisma.UserWhereInput;
+};
+export type UserUpdateToOneWithWhereWithoutPasswordResetInput = {
+    where?: Prisma.UserWhereInput;
+    data: Prisma.XOR<Prisma.UserUpdateWithoutPasswordResetInput, Prisma.UserUncheckedUpdateWithoutPasswordResetInput>;
+};
+export type UserUpdateWithoutPasswordResetInput = {
+    profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    authProviders?: Prisma.AuthProviderUpdateManyWithoutUserNestedInput;
+    otpVerification?: Prisma.UserOtpUpdateOneWithoutUserNestedInput;
+};
+export type UserUncheckedUpdateWithoutPasswordResetInput = {
+    id?: Prisma.IntFieldUpdateOperationsInput | number;
+    profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    authProviders?: Prisma.AuthProviderUncheckedUpdateManyWithoutUserNestedInput;
+    otpVerification?: Prisma.UserOtpUncheckedUpdateOneWithoutUserNestedInput;
 };
 export type UserCountOutputType = {
     authProviders: number;
@@ -350,6 +420,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
     updatedAt?: boolean;
     authProviders?: boolean | Prisma.User$authProvidersArgs<ExtArgs>;
     otpVerification?: boolean | Prisma.User$otpVerificationArgs<ExtArgs>;
+    passwordReset?: boolean | Prisma.User$passwordResetArgs<ExtArgs>;
     _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["user"]>;
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -374,6 +445,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     authProviders?: boolean | Prisma.User$authProvidersArgs<ExtArgs>;
     otpVerification?: boolean | Prisma.User$otpVerificationArgs<ExtArgs>;
+    passwordReset?: boolean | Prisma.User$passwordResetArgs<ExtArgs>;
     _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {};
@@ -383,6 +455,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     objects: {
         authProviders: Prisma.$AuthProviderPayload<ExtArgs>[];
         otpVerification: Prisma.$UserOtpPayload<ExtArgs> | null;
+        passwordReset: Prisma.$UserPasswordResetPayload<ExtArgs> | null;
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: number;
@@ -443,6 +516,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
     readonly [Symbol.toStringTag]: "PrismaPromise";
     authProviders<T extends Prisma.User$authProvidersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$authProvidersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuthProviderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     otpVerification<T extends Prisma.User$otpVerificationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$otpVerificationArgs<ExtArgs>>): Prisma.Prisma__UserOtpClient<runtime.Types.Result.GetResult<Prisma.$UserOtpPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    passwordReset<T extends Prisma.User$passwordResetArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetArgs<ExtArgs>>): Prisma.Prisma__UserPasswordResetClient<runtime.Types.Result.GetResult<Prisma.$UserPasswordResetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
     catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): runtime.Types.Utils.JsPromise<T | TResult>;
     finally(onfinally?: (() => void) | undefined | null): runtime.Types.Utils.JsPromise<T>;
@@ -567,6 +641,12 @@ export type User$otpVerificationArgs<ExtArgs extends runtime.Types.Extensions.In
     omit?: Prisma.UserOtpOmit<ExtArgs> | null;
     include?: Prisma.UserOtpInclude<ExtArgs> | null;
     where?: Prisma.UserOtpWhereInput;
+};
+export type User$passwordResetArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    select?: Prisma.UserPasswordResetSelect<ExtArgs> | null;
+    omit?: Prisma.UserPasswordResetOmit<ExtArgs> | null;
+    include?: Prisma.UserPasswordResetInclude<ExtArgs> | null;
+    where?: Prisma.UserPasswordResetWhereInput;
 };
 export type UserDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.UserSelect<ExtArgs> | null;
