@@ -9,13 +9,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SocialSignInDto = void 0;
+exports.LinkedInSignInDto = exports.GoogleSignInDto = exports.SocialSignInDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class SocialSignInDto {
     code;
     scope;
-    state;
 }
 exports.SocialSignInDto = SocialSignInDto;
 __decorate([
@@ -30,10 +29,24 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SocialSignInDto.prototype, "scope", void 0);
+class GoogleSignInDto extends SocialSignInDto {
+    prompt;
+    authuser;
+}
+exports.GoogleSignInDto = GoogleSignInDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'state-token-from-initiation-step' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'OpenID prompt value, e.g. consent' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SocialSignInDto.prototype, "state", void 0);
+], GoogleSignInDto.prototype, "prompt", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Authuser index from Google' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], GoogleSignInDto.prototype, "authuser", void 0);
+class LinkedInSignInDto extends SocialSignInDto {
+}
+exports.LinkedInSignInDto = LinkedInSignInDto;
 //# sourceMappingURL=social-signin.dto.js.map

@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.JsonNullValueFilter = exports.NullableJsonNullValueInput = exports.SortOrder = exports.UserOtpScalarFieldEnum = exports.AuthProviderScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.JsonNullValueFilter = exports.NullableJsonNullValueInput = exports.SortOrder = exports.UserPasswordResetScalarFieldEnum = exports.UserOtpScalarFieldEnum = exports.AuthProviderScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -47,7 +47,8 @@ exports.AnyNull = runtime.AnyNull;
 exports.ModelName = {
     User: 'User',
     AuthProvider: 'AuthProvider',
-    UserOtp: 'UserOtp'
+    UserOtp: 'UserOtp',
+    UserPasswordReset: 'UserPasswordReset'
 };
 exports.TransactionIsolationLevel = runtime.makeStrictEnum({
     ReadUncommitted: 'ReadUncommitted',
@@ -67,7 +68,6 @@ exports.AuthProviderScalarFieldEnum = {
     provider: 'provider',
     providerUserId: 'providerUserId',
     accessToken: 'accessToken',
-    refreshToken: 'refreshToken',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
@@ -77,6 +77,15 @@ exports.UserOtpScalarFieldEnum = {
     codeHash: 'codeHash',
     expiresAt: 'expiresAt',
     verifiedAt: 'verifiedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.UserPasswordResetScalarFieldEnum = {
+    id: 'id',
+    userId: 'userId',
+    codeHash: 'codeHash',
+    expiresAt: 'expiresAt',
+    usedAt: 'usedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

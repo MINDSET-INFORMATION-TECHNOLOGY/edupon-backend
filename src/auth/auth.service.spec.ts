@@ -28,6 +28,8 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { AuthProviderType } from '../generated/prisma/enums';
+import * as jwt from 'jsonwebtoken';
+import { TokenRevocationService } from './token-revocation.service';
 
 const mockFetch = jest.fn();
 
@@ -39,6 +41,16 @@ const mockPrisma = {
     findFirst: jest.fn(),
     update: jest.fn(),
   },
+  userOtp: {
+    findUnique: jest.fn(),
+    upsert: jest.fn(),
+    update: jest.fn(),
+  },
+  userPasswordReset: {
+    findUnique: jest.fn(),
+    upsert: jest.fn(),
+    update: jest.fn(),
+  },
   authProvider: {
     findUnique: jest.fn(),
     upsert: jest.fn(),
@@ -48,6 +60,12 @@ const mockPrisma = {
 
 const mockMailService = {
   sendOtpVerificationEmail: jest.fn(),
+  sendPasswordResetEmail: jest.fn(),
+};
+
+const mockTokenRevocationService = {
+  revokeToken: jest.fn(),
+  isTokenRevoked: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -69,6 +87,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
+        { provide: TokenRevocationService, useValue: mockTokenRevocationService },
       ],
     }).compile();
 
@@ -140,7 +159,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('returns user plus access and refresh tokens when credentials are valid', async () => {
+    it('returns only role and token when credentials are valid', async () => {
       const dto = {
         email: 'Test@Example.com',
         password: 'password123',
@@ -159,9 +178,7 @@ describe('AuthService', () => {
       } as any;
 
       mockPrisma.user.findFirst.mockResolvedValue(user);
-      mockPrisma.user.update.mockResolvedValue(user);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('refresh-token-hash');
 
       const result = await service.login(dto);
 
@@ -174,23 +191,16 @@ describe('AuthService', () => {
         },
       });
       expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashed-password');
-      expect(mockPrisma.user.update).toHaveBeenCalled();
       expect(result).toMatchObject({
-        user: {
-          id: 7,
-          email: 'test@example.com',
-          fullname: 'Test User',
-          role: 'STUDENT',
-        },
-        tokens: {
-          token_type: 'Bearer',
-          expires_in: 900,
-          refresh_expires_in: 604800,
-        },
+        role: 'STUDENT',
       });
-      expect(typeof result.tokens.access_token).toBe('string');
-      expect(typeof result.tokens.refresh_token).toBe('string');
-      expect(new Date(result.tokens.refresh_token_expires_at).toString()).not.toBe('Invalid Date');
+      expect(typeof result.token).toBe('string');
+      const payload = jwt.verify(result.token, 'dev-jwt-secret') as any;
+      expect(payload).toMatchObject({
+        sub: 7,
+        email: 'test@example.com',
+        role: 'STUDENT',
+      });
     });
 
     it('throws BadRequestException when password is invalid', async () => {
@@ -223,73 +233,17 @@ describe('AuthService', () => {
     });
   });
 
-  describe('refresh token', () => {
-    it('rotates tokens when refresh token is valid', async () => {
-      const dto = {
-        refresh_token: '7.abc.def',
-      } as any;
-      const user = {
-        id: 7,
-        profile: {
-          email: 'test@example.com',
-          fullname: 'Test User',
-          password: 'hashed-password',
-          role: 'STUDENT',
-          area_of_interest: 'Testing',
-          institution: 'Test University',
-          is_verified: true,
-          refresh_token_hash: 'old-refresh-hash',
-          refresh_token_expires_at: new Date(Date.now() + 60_000).toISOString(),
-        },
-      } as any;
-
-      mockPrisma.user.findUnique.mockResolvedValue(user);
-      mockPrisma.user.update.mockResolvedValue(user);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('new-refresh-hash');
-
-      const result = await service.refreshToken(dto);
-
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 7 },
-      });
-      expect(mockPrisma.user.update).toHaveBeenCalled();
-      expect(result.tokens.refresh_expires_in).toBe(604800);
-      expect(result.tokens.refresh_token).not.toBe(dto.refresh_token);
-    });
-
-    it('rejects expired refresh token', async () => {
-      const dto = {
-        refresh_token: '7.abc.def',
-      } as any;
-      const user = {
-        id: 7,
-        profile: {
-          email: 'test@example.com',
-          fullname: 'Test User',
-          password: 'hashed-password',
-          role: 'STUDENT',
-          area_of_interest: 'Testing',
-          institution: 'Test University',
-          is_verified: true,
-          refresh_token_hash: 'old-refresh-hash',
-          refresh_token_expires_at: new Date(Date.now() - 60_000).toISOString(),
-        },
-      } as any;
-
-      mockPrisma.user.findUnique.mockResolvedValue(user);
-
-      await expect(service.refreshToken(dto)).rejects.toThrow('Refresh token has expired');
-    });
-  });
-
   describe('logout', () => {
-    it('destroys current session when session is available', async () => {
+    it('revokes bearer token and destroys session when available', async () => {
       const destroy = jest.fn((cb: (err?: unknown) => void) => cb());
-      const req = { session: { destroy } };
+      const req = {
+        headers: { authorization: 'Bearer test-token' },
+        session: { destroy },
+      };
 
       const result = await service.logout(req);
 
+      expect(mockTokenRevocationService.revokeToken).toHaveBeenCalledWith('test-token', undefined);
       expect(destroy).toHaveBeenCalled();
       expect(result).toEqual({ message: 'User logged out successfully' });
     });
@@ -298,6 +252,126 @@ describe('AuthService', () => {
       await expect(service.logout(undefined)).resolves.toEqual({
         message: 'User logged out successfully',
       });
+    });
+  });
+
+  describe('password reset', () => {
+    it('forgotPassword returns a safe message when user does not exist', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(service.forgotPassword({ email: 'missing@example.com' } as any)).resolves.toEqual({
+        message: 'If an account exists with this email, a reset code has been sent',
+      });
+
+      expect(mockPrisma.userPasswordReset.upsert).not.toHaveBeenCalled();
+      expect(mockMailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('forgotPassword stores reset code and sends reset mail when user exists', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({
+        id: 41,
+        profile: {
+          email: 'john@example.com',
+          fullname: 'John Doe',
+          password: 'hashed',
+          role: 'STUDENT',
+          institution: 'Test School',
+          area_of_interest: 'Testing',
+          is_verified: true,
+        },
+      });
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-otp');
+
+      await service.forgotPassword({ email: 'john@example.com' } as any);
+
+      expect(mockPrisma.userPasswordReset.upsert).toHaveBeenCalled();
+      expect(mockMailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'john@example.com',
+          otp: expect.stringMatching(/^\d{6}$/),
+        }),
+      );
+    });
+
+    it('resetPassword updates password and marks OTP as used', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({
+        id: 10,
+        profile: {
+          email: 'reset@example.com',
+          fullname: 'Reset User',
+          password: 'old-hash',
+          role: 'STUDENT',
+          institution: 'Test School',
+          area_of_interest: 'Testing',
+          is_verified: true,
+        },
+      });
+      mockPrisma.userPasswordReset.findUnique.mockResolvedValue({
+        id: 'otp-1',
+        userId: 10,
+        codeHash: 'hash-otp',
+        expiresAt: new Date(Date.now() + 60_000),
+        usedAt: null,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-password-hash');
+
+      await expect(
+        service.resetPassword({
+          email: 'reset@example.com',
+          otp: '123456',
+          new_password: 'newPassword123',
+        } as any),
+      ).resolves.toEqual({
+        message: 'Password reset successfully',
+      });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: {
+          profile: expect.objectContaining({
+            email: 'reset@example.com',
+            password: 'new-password-hash',
+          }),
+        },
+      });
+      expect(mockPrisma.userPasswordReset.update).toHaveBeenCalledWith({
+        where: { id: 'otp-1' },
+        data: expect.objectContaining({
+          usedAt: expect.any(Date),
+        }),
+      });
+    });
+
+    it('resetPassword throws when OTP is invalid', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({
+        id: 10,
+        profile: {
+          email: 'reset@example.com',
+          fullname: 'Reset User',
+          password: 'old-hash',
+          role: 'STUDENT',
+          institution: 'Test School',
+          area_of_interest: 'Testing',
+          is_verified: true,
+        },
+      });
+      mockPrisma.userPasswordReset.findUnique.mockResolvedValue({
+        id: 'otp-2',
+        userId: 10,
+        codeHash: 'hash-otp',
+        expiresAt: new Date(Date.now() + 60_000),
+        usedAt: null,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.resetPassword({
+          email: 'reset@example.com',
+          otp: '654321',
+          new_password: 'newPassword123',
+        } as any),
+      ).rejects.toThrow('Invalid or expired reset code');
     });
   });
 
@@ -331,7 +405,7 @@ describe('AuthService', () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ({ access_token: 'access-token', refresh_token: 'refresh-token' }),
+          json: async () => ({ access_token: 'access-token' }),
         } as any)
         .mockResolvedValueOnce({
           ok: true,
@@ -376,19 +450,28 @@ describe('AuthService', () => {
         update: {
           providerUserId: 'li-456',
           accessToken: 'access-token',
-          refreshToken: 'refresh-token',
         },
         create: {
           userId: 3,
           provider: AuthProviderType.LINKEDIN,
           providerUserId: 'li-456',
           accessToken: 'access-token',
-          refreshToken: 'refresh-token',
         },
       });
-      // publicUser only specifies a subset of fields; the service adds
-      // null/default values for the rest, so use toMatchObject.
-      expect(result).toMatchObject(publicUser);
+      expect(result).toMatchObject({
+        user: publicUser,
+        tokens: {
+          token_type: 'Bearer',
+          expires_in: 900,
+        },
+      });
+      expect(typeof result?.tokens.access_token).toBe('string');
+      const payload = jwt.verify(result?.tokens.access_token ?? '', 'dev-jwt-secret') as any;
+      expect(payload).toMatchObject({
+        sub: 3,
+        email: 'callback@user.com',
+        role: 'STUDENT',
+      });
     });
 
     it('propagates provider error when token exchange fails', async () => {

@@ -8,7 +8,6 @@ CREATE TABLE "AuthProvider" (
     "provider" "AuthProviderType" NOT NULL,
     "providerUserId" TEXT NOT NULL,
     "accessToken" TEXT,
-    "refreshToken" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

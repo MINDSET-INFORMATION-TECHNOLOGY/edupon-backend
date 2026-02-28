@@ -9,3 +9,4 @@ export { Prisma };
 export type User = Prisma.UserModel;
 export type AuthProvider = Prisma.AuthProviderModel;
 export type UserOtp = Prisma.UserOtpModel;
+export type UserPasswordReset = Prisma.UserPasswordResetModel;
