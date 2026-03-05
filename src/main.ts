@@ -6,7 +6,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import {
   ensureUploadDirectories,
+  isLocalUploadDriver,
   LOCAL_UPLOAD_ROOT,
+  UPLOAD_PUBLIC_PREFIX,
 } from './files/local-upload.config';
 
 async function bootstrap() {
@@ -19,7 +21,9 @@ async function bootstrap() {
 
   // set a global prefix so all routes are under /api
   app.setGlobalPrefix('api');
-  app.useStaticAssets(LOCAL_UPLOAD_ROOT, { prefix: '/public/' });
+  if (isLocalUploadDriver) {
+    app.useStaticAssets(LOCAL_UPLOAD_ROOT, { prefix: `${UPLOAD_PUBLIC_PREFIX}/` });
+  }
 
   // Swagger / OpenAPI setup
   const swaggerConfig = new DocumentBuilder()
