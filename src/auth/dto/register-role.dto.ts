@@ -23,7 +23,11 @@ class RegisterCommonDto {
   @IsString()
   area_of_interest: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Optional avatar image file for multipart/form-data requests.',
+  })
   @IsOptional()
   @IsString()
   avatar?: string;

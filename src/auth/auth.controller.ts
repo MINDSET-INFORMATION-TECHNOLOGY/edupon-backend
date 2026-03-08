@@ -20,20 +20,13 @@ import {
   ApiParam,
   ApiBody,
   ApiQuery,
-  ApiExtraModels,
   ApiConsumes,
-  getSchemaPath,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import {
-  CompanyRegisterDto,
-  EducatorRegisterDto,
-  StudentRegisterDto,
-} from './dto/register-role.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
@@ -49,11 +42,9 @@ import { AuthProviderType } from '../generated/prisma/enums';
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject, ValidationError } from 'class-validator';
 import {
-  avatarDiskStorage,
-  buildAvatarPublicUrl,
-  isAllowedAvatarMimeType,
-  MAX_AVATAR_FILE_SIZE,
-  resolveLocalUploadBaseUrl,
+  type UploadedFileLike,
+  imageUploadMulterOptions,
+  resolveUploadedFile,
 } from '../files/local-upload.config';
 
 @ApiTags('Auth')
@@ -64,58 +55,48 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new account' })
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('avatar', {
-      storage: avatarDiskStorage,
-      limits: { fileSize: MAX_AVATAR_FILE_SIZE },
-      fileFilter: (_req, file, callback) => {
-        if (!isAllowedAvatarMimeType(file.mimetype)) {
-          callback(new BadRequestException('Unsupported avatar file type'), false);
-          return;
-        }
-
-        callback(null, true);
-      },
-    }),
-  )
-  @ApiExtraModels(StudentRegisterDto, EducatorRegisterDto, CompanyRegisterDto)
+  @UseInterceptors(FileInterceptor('avatar', imageUploadMulterOptions))
   @ApiBody({
     description:
-      'Role-based registration payload. Send as multipart/form-data. Optional avatar file field name: avatar.',
+      'Role-based registration payload. Send as multipart/form-data. Use `avatar` as file field.',
     schema: {
-      oneOf: [
-        {
-          $ref: getSchemaPath(StudentRegisterDto),
-        },
-        {
-          $ref: getSchemaPath(EducatorRegisterDto),
-        },
-        {
-          $ref: getSchemaPath(CompanyRegisterDto),
-        },
-      ],
-      discriminator: {
-        propertyName: 'role',
-        mapping: {
-          STUDENT: getSchemaPath(StudentRegisterDto),
-          EDUCATOR: getSchemaPath(EducatorRegisterDto),
-          COMPANY: getSchemaPath(CompanyRegisterDto),
-        },
+      type: 'object',
+      properties: {
+        email: { type: 'string', format: 'email' },
+        fullname: { type: 'string' },
+        password: { type: 'string', minLength: 8 },
+        role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
+        institution: { type: 'string' },
+        industry: { type: 'string' },
+        company_email: { type: 'string' },
+        area_of_interest: { type: 'string' },
+        avatar: { type: 'string', format: 'binary' },
+      },
+      required: ['email', 'fullname', 'password', 'role', 'area_of_interest'],
+      example: {
+        email: 'user@example.com',
+        fullname: 'John Doe',
+        password: 'StrongPass123',
+        role: 'COMPANY',
+        industry: 'Technology',
+        company_email: 'hr@company.com',
+        area_of_interest: 'Computer Science',
       },
     },
   })
   @ApiResponse({ status: 201, description: 'The account has been successfully created.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
-  create(
-    @Body() createAuthDto: CreateAuthDto,
-    @UploadedFile() avatarFile?: { filename?: string },
-    @Req() req?: { protocol?: string; get?: (name: string) => string },
-  ) {
-    if (avatarFile?.filename) {
-      createAuthDto.avatar = buildAvatarPublicUrl(
-        avatarFile.filename,
-        resolveLocalUploadBaseUrl(req),
-      );
+  create(@Body() createAuthDto: CreateAuthDto, @UploadedFile() avatarFile?: UploadedFileLike) {
+    // Ignore plain-text avatar payload on register; avatar must come from uploaded file.
+    createAuthDto.avatar = undefined;
+    const uploadedAvatar = resolveUploadedFile(avatarFile);
+    const role = createAuthDto.role?.toUpperCase();
+    if ((role === 'STUDENT' || role === 'EDUCATOR') && !uploadedAvatar) {
+      throw new BadRequestException('avatar is required for STUDENT and EDUCATOR');
+    }
+
+    if ((role === 'STUDENT' || role === 'EDUCATOR') && uploadedAvatar) {
+      createAuthDto.avatar = uploadedAvatar.url;
     }
 
     return this.authService.create(createAuthDto);
