@@ -52,9 +52,10 @@ describe('AuthController', () => {
         email: 'test@example.com',
         fullname: 'Test User',
         password: 'password123',
-        role: 'STUDENT',
-        institution: undefined,
-        area_of_interest: undefined,
+        role: 'COMPANY' as any,
+        industry: 'Technology',
+        company_email: 'hr@company.com',
+        area_of_interest: 'Engineering',
       } as any;
 
       const created = { id: '1', ...dto };
@@ -131,11 +132,21 @@ describe('AuthController', () => {
         state: 'provider-state-123',
       };
       const session = {
-        user: { id: 1, email: 'google@example.com', fullname: 'Google User', role: 'STUDENT' },
+        user: {
+          id: 1,
+          email: 'google@example.com',
+          fullname: 'Google User',
+          role: 'STUDENT',
+          avatar: null,
+          institution: 'Google University',
+          industry: null,
+          area_of_interest: 'Engineering',
+          company_email: null,
+          is_verified: true,
+        },
         tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
       };
       const authenticated = {
-        role: 'STUDENT',
         token: 'jwt-token',
       };
       const callbackSpy = jest
@@ -153,11 +164,21 @@ describe('AuthController', () => {
     it('should call service.signInWithProviderCallback for LinkedIn', async () => {
       const query = { code: 'li-code', scope: 'r_liteprofile r_emailaddress' };
       const session = {
-        user: { id: 2, email: 'li@example.com', fullname: 'LinkedIn User', role: 'STUDENT' },
+        user: {
+          id: 2,
+          email: 'li@example.com',
+          fullname: 'LinkedIn User',
+          role: 'STUDENT',
+          avatar: null,
+          institution: null,
+          industry: null,
+          area_of_interest: null,
+          company_email: null,
+          is_verified: true,
+        },
         tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
       };
       const authenticated = {
-        role: 'STUDENT',
         token: 'jwt-token',
       };
       const callbackSpy = jest

@@ -6,7 +6,6 @@ import {
   Body,
   Query,
   Req,
-  Patch,
   Param,
   Delete,
   UseGuards,
@@ -27,7 +26,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -208,12 +206,10 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
         token: { type: 'string' },
       },
-      required: ['role', 'token'],
+      required: ['token'],
       example: {
-        role: 'STUDENT',
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
       },
     },
@@ -240,7 +236,6 @@ export class AuthController {
     }
 
     return {
-      role: session.user.role,
       token: session.tokens.access_token,
     };
   }
