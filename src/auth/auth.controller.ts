@@ -36,7 +36,7 @@ import {
   LinkedInSignInDto,
   ProviderSignInDto,
 } from './dto/social-signin.dto';
-import { AuthProviderType } from '../generated/prisma/enums';
+import { AuthProviderType, Role } from '../generated/prisma/enums';
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject, ValidationError } from 'class-validator';
 import {
@@ -206,10 +206,12 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
+        role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
         token: { type: 'string' },
       },
-      required: ['token'],
+      required: ['role', 'token'],
       example: {
+        role: 'STUDENT',
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
       },
     },
@@ -236,6 +238,7 @@ export class AuthController {
     }
 
     return {
+      role: session.user.role ?? Role.STUDENT,
       token: session.tokens.access_token,
     };
   }
