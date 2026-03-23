@@ -207,6 +207,7 @@ export type UserWhereInput = {
   authProviders?: Prisma.AuthProviderListRelationFilter
   otpVerification?: Prisma.XOR<Prisma.UserOtpNullableScalarRelationFilter, Prisma.UserOtpWhereInput> | null
   passwordReset?: Prisma.XOR<Prisma.UserPasswordResetNullableScalarRelationFilter, Prisma.UserPasswordResetWhereInput> | null
+  portfolio?: Prisma.XOR<Prisma.PortfolioNullableScalarRelationFilter, Prisma.PortfolioWhereInput> | null
 }
 
 export type UserOrderByWithRelationInput = {
@@ -217,6 +218,7 @@ export type UserOrderByWithRelationInput = {
   authProviders?: Prisma.AuthProviderOrderByRelationAggregateInput
   otpVerification?: Prisma.UserOtpOrderByWithRelationInput
   passwordReset?: Prisma.UserPasswordResetOrderByWithRelationInput
+  portfolio?: Prisma.PortfolioOrderByWithRelationInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -230,6 +232,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   authProviders?: Prisma.AuthProviderListRelationFilter
   otpVerification?: Prisma.XOR<Prisma.UserOtpNullableScalarRelationFilter, Prisma.UserOtpWhereInput> | null
   passwordReset?: Prisma.XOR<Prisma.UserPasswordResetNullableScalarRelationFilter, Prisma.UserPasswordResetWhereInput> | null
+  portfolio?: Prisma.XOR<Prisma.PortfolioNullableScalarRelationFilter, Prisma.PortfolioWhereInput> | null
 }, "id">
 
 export type UserOrderByWithAggregationInput = {
@@ -261,6 +264,7 @@ export type UserCreateInput = {
   authProviders?: Prisma.AuthProviderCreateNestedManyWithoutUserInput
   otpVerification?: Prisma.UserOtpCreateNestedOneWithoutUserInput
   passwordReset?: Prisma.UserPasswordResetCreateNestedOneWithoutUserInput
+  portfolio?: Prisma.PortfolioCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -271,6 +275,7 @@ export type UserUncheckedCreateInput = {
   authProviders?: Prisma.AuthProviderUncheckedCreateNestedManyWithoutUserInput
   otpVerification?: Prisma.UserOtpUncheckedCreateNestedOneWithoutUserInput
   passwordReset?: Prisma.UserPasswordResetUncheckedCreateNestedOneWithoutUserInput
+  portfolio?: Prisma.PortfolioUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -280,6 +285,7 @@ export type UserUpdateInput = {
   authProviders?: Prisma.AuthProviderUpdateManyWithoutUserNestedInput
   otpVerification?: Prisma.UserOtpUpdateOneWithoutUserNestedInput
   passwordReset?: Prisma.UserPasswordResetUpdateOneWithoutUserNestedInput
+  portfolio?: Prisma.PortfolioUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -290,6 +296,7 @@ export type UserUncheckedUpdateInput = {
   authProviders?: Prisma.AuthProviderUncheckedUpdateManyWithoutUserNestedInput
   otpVerification?: Prisma.UserOtpUncheckedUpdateOneWithoutUserNestedInput
   passwordReset?: Prisma.UserPasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  portfolio?: Prisma.PortfolioUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -398,12 +405,27 @@ export type UserUpdateOneRequiredWithoutPasswordResetNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPasswordResetInput, Prisma.UserUpdateWithoutPasswordResetInput>, Prisma.UserUncheckedUpdateWithoutPasswordResetInput>
 }
 
+export type UserCreateNestedOneWithoutPortfolioInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPortfolioInput, Prisma.UserUncheckedCreateWithoutPortfolioInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPortfolioInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPortfolioNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPortfolioInput, Prisma.UserUncheckedCreateWithoutPortfolioInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPortfolioInput
+  upsert?: Prisma.UserUpsertWithoutPortfolioInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPortfolioInput, Prisma.UserUpdateWithoutPortfolioInput>, Prisma.UserUncheckedUpdateWithoutPortfolioInput>
+}
+
 export type UserCreateWithoutAuthProvidersInput = {
   profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   otpVerification?: Prisma.UserOtpCreateNestedOneWithoutUserInput
   passwordReset?: Prisma.UserPasswordResetCreateNestedOneWithoutUserInput
+  portfolio?: Prisma.PortfolioCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAuthProvidersInput = {
@@ -413,6 +435,7 @@ export type UserUncheckedCreateWithoutAuthProvidersInput = {
   updatedAt?: Date | string
   otpVerification?: Prisma.UserOtpUncheckedCreateNestedOneWithoutUserInput
   passwordReset?: Prisma.UserPasswordResetUncheckedCreateNestedOneWithoutUserInput
+  portfolio?: Prisma.PortfolioUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAuthProvidersInput = {
@@ -437,6 +460,7 @@ export type UserUpdateWithoutAuthProvidersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   otpVerification?: Prisma.UserOtpUpdateOneWithoutUserNestedInput
   passwordReset?: Prisma.UserPasswordResetUpdateOneWithoutUserNestedInput
+  portfolio?: Prisma.PortfolioUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuthProvidersInput = {
@@ -446,6 +470,7 @@ export type UserUncheckedUpdateWithoutAuthProvidersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   otpVerification?: Prisma.UserOtpUncheckedUpdateOneWithoutUserNestedInput
   passwordReset?: Prisma.UserPasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  portfolio?: Prisma.PortfolioUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutOtpVerificationInput = {
@@ -454,6 +479,7 @@ export type UserCreateWithoutOtpVerificationInput = {
   updatedAt?: Date | string
   authProviders?: Prisma.AuthProviderCreateNestedManyWithoutUserInput
   passwordReset?: Prisma.UserPasswordResetCreateNestedOneWithoutUserInput
+  portfolio?: Prisma.PortfolioCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOtpVerificationInput = {
@@ -463,6 +489,7 @@ export type UserUncheckedCreateWithoutOtpVerificationInput = {
   updatedAt?: Date | string
   authProviders?: Prisma.AuthProviderUncheckedCreateNestedManyWithoutUserInput
   passwordReset?: Prisma.UserPasswordResetUncheckedCreateNestedOneWithoutUserInput
+  portfolio?: Prisma.PortfolioUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOtpVerificationInput = {
@@ -487,6 +514,7 @@ export type UserUpdateWithoutOtpVerificationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   authProviders?: Prisma.AuthProviderUpdateManyWithoutUserNestedInput
   passwordReset?: Prisma.UserPasswordResetUpdateOneWithoutUserNestedInput
+  portfolio?: Prisma.PortfolioUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOtpVerificationInput = {
@@ -496,6 +524,7 @@ export type UserUncheckedUpdateWithoutOtpVerificationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   authProviders?: Prisma.AuthProviderUncheckedUpdateManyWithoutUserNestedInput
   passwordReset?: Prisma.UserPasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  portfolio?: Prisma.PortfolioUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPasswordResetInput = {
@@ -504,6 +533,7 @@ export type UserCreateWithoutPasswordResetInput = {
   updatedAt?: Date | string
   authProviders?: Prisma.AuthProviderCreateNestedManyWithoutUserInput
   otpVerification?: Prisma.UserOtpCreateNestedOneWithoutUserInput
+  portfolio?: Prisma.PortfolioCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPasswordResetInput = {
@@ -513,6 +543,7 @@ export type UserUncheckedCreateWithoutPasswordResetInput = {
   updatedAt?: Date | string
   authProviders?: Prisma.AuthProviderUncheckedCreateNestedManyWithoutUserInput
   otpVerification?: Prisma.UserOtpUncheckedCreateNestedOneWithoutUserInput
+  portfolio?: Prisma.PortfolioUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPasswordResetInput = {
@@ -537,6 +568,7 @@ export type UserUpdateWithoutPasswordResetInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   authProviders?: Prisma.AuthProviderUpdateManyWithoutUserNestedInput
   otpVerification?: Prisma.UserOtpUpdateOneWithoutUserNestedInput
+  portfolio?: Prisma.PortfolioUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasswordResetInput = {
@@ -546,6 +578,61 @@ export type UserUncheckedUpdateWithoutPasswordResetInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   authProviders?: Prisma.AuthProviderUncheckedUpdateManyWithoutUserNestedInput
   otpVerification?: Prisma.UserOtpUncheckedUpdateOneWithoutUserNestedInput
+  portfolio?: Prisma.PortfolioUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserCreateWithoutPortfolioInput = {
+  profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  authProviders?: Prisma.AuthProviderCreateNestedManyWithoutUserInput
+  otpVerification?: Prisma.UserOtpCreateNestedOneWithoutUserInput
+  passwordReset?: Prisma.UserPasswordResetCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutPortfolioInput = {
+  id?: number
+  profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  authProviders?: Prisma.AuthProviderUncheckedCreateNestedManyWithoutUserInput
+  otpVerification?: Prisma.UserOtpUncheckedCreateNestedOneWithoutUserInput
+  passwordReset?: Prisma.UserPasswordResetUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutPortfolioInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPortfolioInput, Prisma.UserUncheckedCreateWithoutPortfolioInput>
+}
+
+export type UserUpsertWithoutPortfolioInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPortfolioInput, Prisma.UserUncheckedUpdateWithoutPortfolioInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPortfolioInput, Prisma.UserUncheckedCreateWithoutPortfolioInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPortfolioInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPortfolioInput, Prisma.UserUncheckedUpdateWithoutPortfolioInput>
+}
+
+export type UserUpdateWithoutPortfolioInput = {
+  profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  authProviders?: Prisma.AuthProviderUpdateManyWithoutUserNestedInput
+  otpVerification?: Prisma.UserOtpUpdateOneWithoutUserNestedInput
+  passwordReset?: Prisma.UserPasswordResetUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPortfolioInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  profile?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  authProviders?: Prisma.AuthProviderUncheckedUpdateManyWithoutUserNestedInput
+  otpVerification?: Prisma.UserOtpUncheckedUpdateOneWithoutUserNestedInput
+  passwordReset?: Prisma.UserPasswordResetUncheckedUpdateOneWithoutUserNestedInput
 }
 
 
@@ -587,6 +674,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   authProviders?: boolean | Prisma.User$authProvidersArgs<ExtArgs>
   otpVerification?: boolean | Prisma.User$otpVerificationArgs<ExtArgs>
   passwordReset?: boolean | Prisma.User$passwordResetArgs<ExtArgs>
+  portfolio?: boolean | Prisma.User$portfolioArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -616,6 +704,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   authProviders?: boolean | Prisma.User$authProvidersArgs<ExtArgs>
   otpVerification?: boolean | Prisma.User$otpVerificationArgs<ExtArgs>
   passwordReset?: boolean | Prisma.User$passwordResetArgs<ExtArgs>
+  portfolio?: boolean | Prisma.User$portfolioArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -627,6 +716,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     authProviders: Prisma.$AuthProviderPayload<ExtArgs>[]
     otpVerification: Prisma.$UserOtpPayload<ExtArgs> | null
     passwordReset: Prisma.$UserPasswordResetPayload<ExtArgs> | null
+    portfolio: Prisma.$PortfolioPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1030,6 +1120,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   authProviders<T extends Prisma.User$authProvidersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$authProvidersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuthProviderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   otpVerification<T extends Prisma.User$otpVerificationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$otpVerificationArgs<ExtArgs>>): Prisma.Prisma__UserOtpClient<runtime.Types.Result.GetResult<Prisma.$UserOtpPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   passwordReset<T extends Prisma.User$passwordResetArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetArgs<ExtArgs>>): Prisma.Prisma__UserPasswordResetClient<runtime.Types.Result.GetResult<Prisma.$UserPasswordResetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  portfolio<T extends Prisma.User$portfolioArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$portfolioArgs<ExtArgs>>): Prisma.Prisma__PortfolioClient<runtime.Types.Result.GetResult<Prisma.$PortfolioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1510,6 +1601,25 @@ export type User$passwordResetArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   include?: Prisma.UserPasswordResetInclude<ExtArgs> | null
   where?: Prisma.UserPasswordResetWhereInput
+}
+
+/**
+ * User.portfolio
+ */
+export type User$portfolioArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Portfolio
+   */
+  select?: Prisma.PortfolioSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Portfolio
+   */
+  omit?: Prisma.PortfolioOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortfolioInclude<ExtArgs> | null
+  where?: Prisma.PortfolioWhereInput
 }
 
 /**

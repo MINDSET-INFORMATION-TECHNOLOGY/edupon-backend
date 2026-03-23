@@ -15,6 +15,7 @@ const app_service_1 = require("./app.service");
 const prisma_module_1 = require("./prisma/prisma.module");
 const auth_module_1 = require("./auth/auth.module");
 const request_timeout_interceptor_1 = require("./common/interceptors/request-timeout.interceptor");
+const portfolio_module_1 = require("./portfolio/portfolio.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -29,6 +30,7 @@ exports.AppModule = AppModule = __decorate([
                     limit: 100,
                 },
             ]),
+            portfolio_module_1.PortfolioModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

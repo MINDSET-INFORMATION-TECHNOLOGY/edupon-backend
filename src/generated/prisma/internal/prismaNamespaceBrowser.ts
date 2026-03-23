@@ -54,7 +54,8 @@ export const ModelName = {
   User: 'User',
   AuthProvider: 'AuthProvider',
   UserOtp: 'UserOtp',
-  UserPasswordReset: 'UserPasswordReset'
+  UserPasswordReset: 'UserPasswordReset',
+  Portfolio: 'Portfolio'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -120,6 +121,21 @@ export const UserPasswordResetScalarFieldEnum = {
 } as const
 
 export type UserPasswordResetScalarFieldEnum = (typeof UserPasswordResetScalarFieldEnum)[keyof typeof UserPasswordResetScalarFieldEnum]
+
+
+export const PortfolioScalarFieldEnum = {
+  id: 'id',
+  fullName: 'fullName',
+  email: 'email',
+  bio: 'bio',
+  skills: 'skills',
+  portfolioLink: 'portfolioLink',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PortfolioScalarFieldEnum = (typeof PortfolioScalarFieldEnum)[keyof typeof PortfolioScalarFieldEnum]
 
 
 export const SortOrder = {

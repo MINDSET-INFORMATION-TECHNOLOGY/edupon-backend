@@ -20,7 +20,6 @@ const passport_1 = require("@nestjs/passport");
 const platform_express_1 = require("@nestjs/platform-express");
 const auth_service_1 = require("./auth.service");
 const create_auth_dto_1 = require("./dto/create-auth.dto");
-const register_role_dto_1 = require("./dto/register-role.dto");
 const login_dto_1 = require("./dto/login.dto");
 const request_otp_dto_1 = require("./dto/request-otp.dto");
 const verify_otp_dto_1 = require("./dto/verify-otp.dto");
@@ -36,9 +35,15 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    create(createAuthDto, avatarFile, req) {
-        if (avatarFile?.filename) {
-            createAuthDto.avatar = (0, local_upload_config_1.buildAvatarPublicUrl)(avatarFile.filename, (0, local_upload_config_1.resolveLocalUploadBaseUrl)(req));
+    create(createAuthDto, avatarFile) {
+        createAuthDto.avatar = undefined;
+        const uploadedAvatar = (0, local_upload_config_1.resolveUploadedFile)(avatarFile);
+        const role = createAuthDto.role?.toUpperCase();
+        if ((role === 'STUDENT' || role === 'EDUCATOR') && !uploadedAvatar) {
+            throw new common_1.BadRequestException('avatar is required for STUDENT and EDUCATOR');
+        }
+        if ((role === 'STUDENT' || role === 'EDUCATOR') && uploadedAvatar) {
+            createAuthDto.avatar = uploadedAvatar.url;
         }
         return this.authService.create(createAuthDto);
     }
@@ -70,16 +75,18 @@ let AuthController = class AuthController {
         const prov = this.parseProvider(provider);
         let dto;
         if (prov === enums_1.AuthProviderType.GOOGLE) {
-            const cast = (0, class_transformer_1.plainToInstance)(social_signin_dto_1.GoogleSignInDto, query);
-            await (0, class_validator_1.validateOrReject)(cast, { whitelist: true, forbidNonWhitelisted: true });
-            dto = cast;
+            dto = await this.validateProviderQuery(social_signin_dto_1.GoogleSignInDto, query);
         }
         else {
-            const cast = (0, class_transformer_1.plainToInstance)(social_signin_dto_1.LinkedInSignInDto, query);
-            await (0, class_validator_1.validateOrReject)(cast, { whitelist: true, forbidNonWhitelisted: true });
-            dto = cast;
+            dto = await this.validateProviderQuery(social_signin_dto_1.LinkedInSignInDto, query);
         }
-        return this.authService.signInWithProviderCallback(prov, dto);
+        const session = await this.authService.signInWithProviderCallback(prov, dto);
+        if (!session) {
+            throw new common_1.BadRequestException('Unable to sign in with provider');
+        }
+        return {
+            token: session.tokens.access_token,
+        };
     }
     parseProvider(provider) {
         const normalized = provider.toUpperCase();
@@ -89,45 +96,56 @@ let AuthController = class AuthController {
             return enums_1.AuthProviderType.LINKEDIN;
         throw new common_1.BadRequestException(`Unsupported provider: ${provider}`);
     }
+    async validateProviderQuery(dtoClass, query) {
+        const cast = (0, class_transformer_1.plainToInstance)(dtoClass, query);
+        try {
+            await (0, class_validator_1.validateOrReject)(cast, { whitelist: true, forbidNonWhitelisted: false });
+            return cast;
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(this.formatValidationError(error));
+        }
+    }
+    formatValidationError(error) {
+        if (!Array.isArray(error)) {
+            return ['Invalid OAuth callback query parameters'];
+        }
+        const messages = error
+            .flatMap((validationError) => Object.values(validationError.constraints ?? {}))
+            .filter((message) => typeof message === 'string');
+        return messages.length > 0 ? messages : ['Invalid OAuth callback query parameters'];
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('register'),
     (0, swagger_1.ApiOperation)({ summary: 'Register a new account' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('avatar', {
-        storage: local_upload_config_1.avatarDiskStorage,
-        limits: { fileSize: local_upload_config_1.MAX_AVATAR_FILE_SIZE },
-        fileFilter: (_req, file, callback) => {
-            if (!(0, local_upload_config_1.isAllowedAvatarMimeType)(file.mimetype)) {
-                callback(new common_1.BadRequestException('Unsupported avatar file type'), false);
-                return;
-            }
-            callback(null, true);
-        },
-    })),
-    (0, swagger_1.ApiExtraModels)(register_role_dto_1.StudentRegisterDto, register_role_dto_1.EducatorRegisterDto, register_role_dto_1.CompanyRegisterDto),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('avatar', local_upload_config_1.imageUploadMulterOptions)),
     (0, swagger_1.ApiBody)({
-        description: 'Role-based registration payload. Send as multipart/form-data. Optional avatar file field name: avatar.',
+        description: 'Role-based registration payload. Send as multipart/form-data. Use `avatar` as file field.',
         schema: {
-            oneOf: [
-                {
-                    $ref: (0, swagger_1.getSchemaPath)(register_role_dto_1.StudentRegisterDto),
-                },
-                {
-                    $ref: (0, swagger_1.getSchemaPath)(register_role_dto_1.EducatorRegisterDto),
-                },
-                {
-                    $ref: (0, swagger_1.getSchemaPath)(register_role_dto_1.CompanyRegisterDto),
-                },
-            ],
-            discriminator: {
-                propertyName: 'role',
-                mapping: {
-                    STUDENT: (0, swagger_1.getSchemaPath)(register_role_dto_1.StudentRegisterDto),
-                    EDUCATOR: (0, swagger_1.getSchemaPath)(register_role_dto_1.EducatorRegisterDto),
-                    COMPANY: (0, swagger_1.getSchemaPath)(register_role_dto_1.CompanyRegisterDto),
-                },
+            type: 'object',
+            properties: {
+                email: { type: 'string', format: 'email' },
+                fullname: { type: 'string' },
+                password: { type: 'string', minLength: 8 },
+                role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
+                institution: { type: 'string' },
+                industry: { type: 'string' },
+                company_email: { type: 'string' },
+                area_of_interest: { type: 'string' },
+                avatar: { type: 'string', format: 'binary' },
+            },
+            required: ['email', 'fullname', 'password', 'role', 'area_of_interest'],
+            example: {
+                email: 'user@example.com',
+                fullname: 'John Doe',
+                password: 'StrongPass123',
+                role: 'COMPANY',
+                industry: 'Technology',
+                company_email: 'hr@company.com',
+                area_of_interest: 'Computer Science',
             },
         },
     }),
@@ -135,9 +153,8 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Bad request.' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.UploadedFile)()),
-    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_auth_dto_1.CreateAuthDto, Object, Object]),
+    __metadata("design:paramtypes", [create_auth_dto_1.CreateAuthDto, Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "create", null);
 __decorate([
@@ -257,7 +274,20 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'scope', required: false, type: String }),
     (0, swagger_1.ApiQuery)({ name: 'authuser', required: false, type: String, description: 'Google only.' }),
     (0, swagger_1.ApiQuery)({ name: 'prompt', required: false, type: String, description: 'Google only.' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Provider callback handled successfully.' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Provider callback handled successfully.',
+        schema: {
+            type: 'object',
+            properties: {
+                token: { type: 'string' },
+            },
+            required: ['token'],
+            example: {
+                token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+        },
+    }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Bad request.' }),
     __param(0, (0, common_1.Param)('provider')),
     __param(1, (0, common_1.Query)()),

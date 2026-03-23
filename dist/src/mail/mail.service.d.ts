@@ -15,8 +15,8 @@ export declare class MailService {
     sendOtpVerificationEmail(input: SendOtpMailInput): Promise<void>;
     sendPasswordResetEmail(input: SendPasswordResetMailInput): Promise<void>;
     private getTransporter;
-    private renderOtpTemplate;
-    private renderPasswordResetTemplate;
+    private buildCodeEmailText;
+    private renderCodeTemplate;
     private getRequiredEnv;
     private getRequiredNumberEnv;
     private getBooleanEnv;

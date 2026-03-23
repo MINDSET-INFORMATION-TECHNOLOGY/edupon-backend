@@ -399,3 +399,4 @@ Temporary Items
 **node_modules/**
 **!node_modules/ # Added to include node_modules globally if not caught by VS template
 /generated/prisma
+docker-compose.yml

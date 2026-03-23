@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.JsonNullValueFilter = exports.NullableJsonNullValueInput = exports.SortOrder = exports.UserPasswordResetScalarFieldEnum = exports.UserOtpScalarFieldEnum = exports.AuthProviderScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.JsonNullValueFilter = exports.NullableJsonNullValueInput = exports.SortOrder = exports.PortfolioScalarFieldEnum = exports.UserPasswordResetScalarFieldEnum = exports.UserOtpScalarFieldEnum = exports.AuthProviderScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -48,7 +48,8 @@ exports.ModelName = {
     User: 'User',
     AuthProvider: 'AuthProvider',
     UserOtp: 'UserOtp',
-    UserPasswordReset: 'UserPasswordReset'
+    UserPasswordReset: 'UserPasswordReset',
+    Portfolio: 'Portfolio'
 };
 exports.TransactionIsolationLevel = runtime.makeStrictEnum({
     ReadUncommitted: 'ReadUncommitted',
@@ -86,6 +87,17 @@ exports.UserPasswordResetScalarFieldEnum = {
     codeHash: 'codeHash',
     expiresAt: 'expiresAt',
     usedAt: 'usedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.PortfolioScalarFieldEnum = {
+    id: 'id',
+    fullName: 'fullName',
+    email: 'email',
+    bio: 'bio',
+    skills: 'skills',
+    portfolioLink: 'portfolioLink',
+    userId: 'userId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

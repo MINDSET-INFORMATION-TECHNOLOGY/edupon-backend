@@ -40,5 +40,8 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get userPasswordReset(): Prisma.UserPasswordResetDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    get portfolio(): Prisma.PortfolioDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
 }
 export declare function getPrismaClientClass(): PrismaClientConstructor;

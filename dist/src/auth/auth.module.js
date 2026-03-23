@@ -12,7 +12,7 @@ const passport_1 = require("@nestjs/passport");
 const auth_service_1 = require("./auth.service");
 const auth_controller_1 = require("./auth.controller");
 const prisma_module_1 = require("../prisma/prisma.module");
-const mail_service_1 = require("../mail/mail.service");
+const mail_module_1 = require("../mail/mail.module");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const token_revocation_service_1 = require("./token-revocation.service");
 let AuthModule = class AuthModule {
@@ -20,9 +20,9 @@ let AuthModule = class AuthModule {
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, passport_1.PassportModule.register({ defaultStrategy: 'jwt' })],
+        imports: [prisma_module_1.PrismaModule, mail_module_1.MailModule, passport_1.PassportModule.register({ defaultStrategy: 'jwt' })],
         controllers: [auth_controller_1.AuthController],
-        providers: [auth_service_1.AuthService, mail_service_1.MailService, jwt_strategy_1.JwtStrategy, token_revocation_service_1.TokenRevocationService],
+        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, token_revocation_service_1.TokenRevocationService],
         exports: [auth_service_1.AuthService],
     })
 ], AuthModule);

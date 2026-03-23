@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { RequestTimeoutInterceptor } from './common/interceptors/request-timeout.interceptor';
+import { PortfolioModule } from './portfolio/portfolio.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { RequestTimeoutInterceptor } from './common/interceptors/request-timeout
         limit: 100,
       },
     ]),
+    PortfolioModule,
   ],
   controllers: [AppController],
   providers: [

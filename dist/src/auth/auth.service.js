@@ -52,9 +52,6 @@ const crypto_1 = require("crypto");
 const mail_service_1 = require("../mail/mail.service");
 const jwt = __importStar(require("jsonwebtoken"));
 const token_revocation_service_1 = require("./token-revocation.service");
-const fs_1 = require("fs");
-const promises_1 = require("fs/promises");
-const local_upload_config_1 = require("../files/local-upload.config");
 let AuthService = class AuthService {
     static { AuthService_1 = this; }
     prisma;
@@ -89,8 +86,7 @@ let AuthService = class AuthService {
         const user = await this.prisma.user.create({
             data: { profile: profile },
         });
-        const userWithFinalizedAvatar = await this.finalizeLocalAvatarFilename(user);
-        return this.toPublicUser(userWithFinalizedAvatar);
+        return this.toPublicUser(user);
     }
     async login(dto) {
         if (!dto.email || !dto.password) {
@@ -355,17 +351,14 @@ let AuthService = class AuthService {
     }
     getProviderSignInUrl(provider) {
         const config = this.getProviderConfig(provider);
-        const state = (0, crypto_1.randomUUID)();
         const params = new URLSearchParams({
             response_type: 'code',
             client_id: config.clientId,
             redirect_uri: config.callbackUrl,
             scope: config.scopes.join(' '),
-            state,
         });
         return {
             url: `${config.authorizationUrl}?${params.toString()}`,
-            state,
         };
     }
     getProviderConfig(provider) {
@@ -475,26 +468,14 @@ let AuthService = class AuthService {
         const existingUser = await this.findUserByEmail(dto.email);
         if (existingUser) {
             const existingProfile = this.readUserProfile(existingUser.profile);
-            if (dto.avatar && existingProfile.avatar !== dto.avatar) {
-                const updatedUser = await this.prisma.user.update({
-                    where: { id: existingUser.id },
-                    data: {
-                        profile: {
-                            ...existingProfile,
-                            avatar: dto.avatar,
-                        },
-                    },
-                });
-                return updatedUser;
-            }
-            return existingUser;
+            return this.syncSocialProfileFields(existingUser.id, existingProfile, dto);
         }
         const profile = this.buildRoleProfile({
             email: dto.email,
             fullname: dto.fullname,
             avatar: dto.avatar ?? null,
             password: await bcrypt.hash((0, crypto_1.randomUUID)(), 10),
-            role: enums_1.Role.STUDENT,
+            role: null,
             institution: 'Not provided',
             industry: null,
             area_of_interest: 'General',
@@ -508,12 +489,10 @@ let AuthService = class AuthService {
         });
     }
     async upsertSocialProvider(provider, dto) {
-        const existingProvider = await this.prisma.authProvider.findUnique({
+        const existingProvider = await this.prisma.authProvider.findFirst({
             where: {
-                provider_providerUserId: {
-                    provider,
-                    providerUserId: dto.providerUserId,
-                },
+                provider,
+                providerUserId: dto.providerUserId,
             },
             include: {
                 user: true,
@@ -521,43 +500,60 @@ let AuthService = class AuthService {
         });
         if (existingProvider) {
             const existingProfile = this.readUserProfile(existingProvider.user.profile);
-            if (dto.avatar && existingProfile.avatar !== dto.avatar) {
-                const updatedUser = await this.prisma.user.update({
-                    where: { id: existingProvider.user.id },
-                    data: {
-                        profile: {
-                            ...existingProfile,
-                            avatar: dto.avatar,
-                        },
-                    },
-                });
-                return updatedUser;
-            }
-            return existingProvider.user;
+            return this.syncSocialProfileFields(existingProvider.user.id, existingProfile, dto);
         }
         const user = await this.findOrCreateSocialUser(dto);
-        await this.prisma.authProvider.upsert({
+        const existingUserProvider = await this.prisma.authProvider.findFirst({
             where: {
-                userId_provider: {
-                    userId: user.id,
-                    provider,
-                },
-            },
-            update: {
-                providerUserId: dto.providerUserId,
-                accessToken: dto.accessToken,
-            },
-            create: {
                 userId: user.id,
                 provider,
-                providerUserId: dto.providerUserId,
-                accessToken: dto.accessToken,
             },
         });
-        const latestUser = await this.prisma.user.findUnique({
+        if (existingUserProvider) {
+            await this.prisma.authProvider.update({
+                where: { id: existingUserProvider.id },
+                data: {
+                    providerUserId: dto.providerUserId,
+                    accessToken: dto.accessToken,
+                },
+            });
+        }
+        else {
+            await this.prisma.authProvider.create({
+                data: {
+                    userId: user.id,
+                    provider,
+                    providerUserId: dto.providerUserId,
+                    accessToken: dto.accessToken,
+                },
+            });
+        }
+        const latestUser = await this.prisma.user.findFirst({
             where: { id: user.id },
         });
         return latestUser;
+    }
+    async syncSocialProfileFields(userId, currentProfile, dto) {
+        const nextEmail = (dto.email ?? '').trim().toLowerCase();
+        const nextFullname = (dto.fullname ?? '').trim();
+        const nextAvatar = typeof dto.avatar === 'string' ? dto.avatar : currentProfile.avatar;
+        const shouldUpdate = (!!nextEmail && nextEmail !== currentProfile.email) ||
+            (!!nextFullname && nextFullname !== currentProfile.fullname) ||
+            nextAvatar !== currentProfile.avatar;
+        if (!shouldUpdate) {
+            return this.prisma.user.findFirst({ where: { id: userId } });
+        }
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                profile: {
+                    ...currentProfile,
+                    email: nextEmail || currentProfile.email,
+                    fullname: nextFullname || currentProfile.fullname,
+                    avatar: nextAvatar,
+                },
+            },
+        });
     }
     async findUserByEmail(email) {
         const normalizedEmail = email.trim().toLowerCase();
@@ -664,39 +660,6 @@ let AuthService = class AuthService {
     }
     getJwtSecret() {
         return process.env.JWT_ACCESS_SECRET ?? process.env.JWT_SECRET ?? 'dev-jwt-secret';
-    }
-    async finalizeLocalAvatarFilename(user) {
-        const profile = this.readUserProfile(user.profile);
-        if (!profile.avatar) {
-            return user;
-        }
-        const currentFilename = (0, local_upload_config_1.extractAvatarFilenameFromUrl)(profile.avatar);
-        if (!currentFilename) {
-            return user;
-        }
-        const nextFilename = (0, local_upload_config_1.buildAvatarIdentityFilename)(user.id, profile.fullname, currentFilename);
-        if (!nextFilename || nextFilename === currentFilename) {
-            return user;
-        }
-        const currentPath = (0, local_upload_config_1.getAvatarDiskPath)(currentFilename);
-        const nextPath = (0, local_upload_config_1.getAvatarDiskPath)(nextFilename);
-        if (!(0, fs_1.existsSync)(currentPath)) {
-            return user;
-        }
-        try {
-            await (0, promises_1.rename)(currentPath, nextPath);
-        }
-        catch {
-            return user;
-        }
-        const nextProfile = {
-            ...profile,
-            avatar: (0, local_upload_config_1.replaceAvatarFilenameInUrl)(profile.avatar, nextFilename),
-        };
-        return this.prisma.user.update({
-            where: { id: user.id },
-            data: { profile: nextProfile },
-        });
     }
     toPublicUser(user) {
         const profile = this.readUserProfile(user.profile);
