@@ -5,6 +5,7 @@ import * as jwt from 'jsonwebtoken';
 import { AppModule } from './../src/app.module';
 import { AuthService } from '../src/auth/auth.service';
 import { AuthProviderType } from '../src/generated/prisma/enums';
+import { ensureUploadDirectories } from '../src/files/local-upload.config';
 
 describe('Auth registration (e2e)', () => {
   let app: INestApplication;
@@ -102,6 +103,8 @@ describe('Auth registration (e2e)', () => {
   };
 
   beforeAll(async () => {
+    ensureUploadDirectories();
+
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -130,14 +133,13 @@ describe('Auth registration (e2e)', () => {
   it('/api/register (POST) registers a user', () => {
     return request(app.getHttpServer())
       .post('/api/register')
-      .send({
-        email: 'bob@example.com',
-        fullname: 'Bob Builder',
-        password: 'secret987',
-        role: 'STUDENT',
-        institution: 'Test University',
-        area_of_interest: 'Computer Science',
-      })
+      .field('email', 'bob@example.com')
+      .field('fullname', 'Bob Builder')
+      .field('password', 'secret987')
+      .field('role', 'STUDENT')
+      .field('institution', 'Test University')
+      .field('area_of_interest', 'Computer Science')
+      .attach('avatar', Buffer.from('fake-image'), { filename: 'avatar.jpg', contentType: 'image/jpeg' })
       .expect(201)
       .expect(fakeUser);
   });
