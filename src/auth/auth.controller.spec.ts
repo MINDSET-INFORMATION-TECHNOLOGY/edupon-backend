@@ -147,6 +147,7 @@ describe('AuthController', () => {
         tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
       };
       const authenticated = {
+        role: 'STUDENT',
         token: 'jwt-token',
       };
       const callbackSpy = jest
@@ -179,6 +180,7 @@ describe('AuthController', () => {
         tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
       };
       const authenticated = {
+        role: 'STUDENT',
         token: 'jwt-token',
       };
       const callbackSpy = jest
