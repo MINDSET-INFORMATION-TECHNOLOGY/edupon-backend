@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+
 jest.mock('./auth.service', () => ({
   AuthService: class {
     create = jest.fn();
@@ -22,7 +24,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
-import { AuthProviderType } from '../generated/prisma/enums';
+import { AuthProviderType, Role } from '../generated/prisma/enums';
 import {
   GoogleSignInDto,
   LinkedInSignInDto,
@@ -52,7 +54,7 @@ describe('AuthController', () => {
         email: 'test@example.com',
         fullname: 'Test User',
         password: 'password123',
-        role: 'COMPANY' as any,
+        role: Role.company as any,
         industry: 'Technology',
         company_email: 'hr@company.com',
         area_of_interest: 'Engineering',
@@ -73,7 +75,7 @@ describe('AuthController', () => {
         password: 'password123',
       };
       const loggedInUser = {
-        role: 'STUDENT',
+        role: Role.student,
         token: 'jwt-token',
       };
       jest.spyOn(service, 'login').mockResolvedValue(loggedInUser as any);
@@ -136,8 +138,7 @@ describe('AuthController', () => {
           id: 1,
           email: 'google@example.com',
           fullname: 'Google User',
-          role: 'STUDENT',
-          avatar: null,
+          role: Role.student,
           institution: 'Google University',
           industry: null,
           area_of_interest: 'Engineering',
@@ -147,7 +148,7 @@ describe('AuthController', () => {
         tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
       };
       const authenticated = {
-        role: 'STUDENT',
+        role: Role.student,
         token: 'jwt-token',
       };
       const callbackSpy = jest
@@ -169,8 +170,7 @@ describe('AuthController', () => {
           id: 2,
           email: 'li@example.com',
           fullname: 'LinkedIn User',
-          role: 'STUDENT',
-          avatar: null,
+          role: Role.student,
           institution: null,
           industry: null,
           area_of_interest: null,
@@ -180,7 +180,7 @@ describe('AuthController', () => {
         tokens: { token_type: 'Bearer', access_token: 'jwt-token', expires_in: 900 },
       };
       const authenticated = {
-        role: 'STUDENT',
+        role: Role.student,
         token: 'jwt-token',
       };
       const callbackSpy = jest

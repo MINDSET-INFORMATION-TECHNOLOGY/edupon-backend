@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthProviderType = exports.Role = void 0;
 exports.Role = {
-    STUDENT: 'STUDENT',
-    EDUCATOR: 'EDUCATOR',
-    COMPANY: 'COMPANY'
+    student: 'student',
+    educator: 'educator',
+    company: 'company'
 };
 exports.AuthProviderType = {
     GOOGLE: 'GOOGLE',

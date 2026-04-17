@@ -17,7 +17,13 @@ async function bootstrap() {
   ensureUploadDirectories();
 
   // apply validation globally
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   // set a global prefix so all routes are under /api
   app.setGlobalPrefix('api');

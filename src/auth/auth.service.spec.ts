@@ -10,8 +10,10 @@ jest.mock('../generated/prisma/client', () => {
         delete: jest.fn(),
       },
       authProvider: {
+        findFirst: jest.fn(),
         findUnique: jest.fn(),
         upsert: jest.fn(),
+        create: jest.fn(),
         updateMany: jest.fn(),
       },
     })),
@@ -22,16 +24,21 @@ jest.mock('bcrypt', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
 }));
+import { beforeAll, beforeEach, afterEach, describe, it, expect, jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
-import { AuthProviderType } from '../generated/prisma/enums';
+import { AuthProviderType, Role } from '../generated/prisma/enums';
 import * as jwt from 'jsonwebtoken';
 import { TokenRevocationService } from './token-revocation.service';
 
-const mockFetch = jest.fn();
+const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+type BcryptHashFn = (value: string | Buffer, saltOrRounds: string | number) => Promise<string>;
+type BcryptCompareFn = (value: string | Buffer, encrypted: string) => Promise<boolean>;
+const mockBcryptHash = bcrypt.hash as jest.MockedFunction<BcryptHashFn>;
+const mockBcryptCompare = bcrypt.compare as jest.MockedFunction<BcryptCompareFn>;
 
 // minimal mimic of the PrismaClient interface used by our service
 const mockPrisma = {
@@ -52,11 +59,13 @@ const mockPrisma = {
     update: jest.fn(),
   },
   authProvider: {
+    findFirst: jest.fn(),
     findUnique: jest.fn(),
     upsert: jest.fn(),
+    create: jest.fn(),
     updateMany: jest.fn(),
   },
-};
+} as any;
 
 const mockMailService = {
   sendOtpVerificationEmail: jest.fn(),
@@ -108,7 +117,7 @@ describe('AuthService', () => {
         email: 'a@b.com',
         fullname: 'A B',
         password: 'pass1234',
-        role: 'STUDENT',
+        role: Role.student,
         area_of_interest: 'Testing',
         institution: 'Some School',
       } as any;
@@ -123,7 +132,7 @@ describe('AuthService', () => {
       mockPrisma.user.findFirst.mockResolvedValue(undefined);
 
       // configure the bcrypt mock directly
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed');
+      mockBcryptHash.mockResolvedValue('hashed');
       const result = await service.create(dto);
 
       expect(bcrypt.hash).toHaveBeenCalledWith('pass1234', 10);
@@ -133,7 +142,7 @@ describe('AuthService', () => {
             email: 'a@b.com',
             fullname: 'A B',
             password: 'hashed',
-            role: 'STUDENT',
+            role: Role.student,
           }),
         }),
       });
@@ -142,12 +151,12 @@ describe('AuthService', () => {
         id: 1,
         email: 'a@b.com',
         fullname: 'A B',
-        role: 'STUDENT',
+        role: Role.student,
       });
     });
 
     it('throws BadRequestException on duplicate email', async () => {
-      const dto = { email: 'a@b.com', fullname: '', password: 'p', role: 'STUDENT', area_of_interest: 'None', institution: 'Any' } as any;
+      const dto = { email: 'a@b.com', fullname: '', password: 'p', role: Role.student, area_of_interest: 'None', institution: 'Any' } as any;
       // simulate email already exists by returning a record from
       // findFirst; create shouldn’t even be called.
       mockPrisma.user.findFirst.mockResolvedValue({ id: 'existing', profile: { email: 'a@b.com' } });
@@ -170,15 +179,15 @@ describe('AuthService', () => {
           email: 'test@example.com',
           fullname: 'Test User',
           password: 'hashed-password',
-          role: 'STUDENT',
+          role: Role.student,
           area_of_interest: 'Testing',
           institution: 'Test University',
           is_verified: true,
-        },
-      } as any;
+  },
+} as any;
 
       mockPrisma.user.findFirst.mockResolvedValue(user);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockBcryptCompare.mockResolvedValue(true);
 
       const result = await service.login(dto);
 
@@ -192,14 +201,14 @@ describe('AuthService', () => {
       });
       expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashed-password');
       expect(result).toMatchObject({
-        role: 'STUDENT',
+        role: Role.student,
       });
       expect(typeof result.token).toBe('string');
       const payload = jwt.verify(result.token, 'dev-jwt-secret') as any;
       expect(payload).toMatchObject({
         sub: 7,
         email: 'test@example.com',
-        role: 'STUDENT',
+        role: Role.student,
       });
     });
 
@@ -214,7 +223,7 @@ describe('AuthService', () => {
           email: 'test@example.com',
           fullname: 'Test User',
           password: 'hashed-password',
-          role: 'STUDENT',
+          role: Role.student,
           area_of_interest: 'Testing',
           institution: 'Test University',
           is_verified: false,
@@ -222,7 +231,7 @@ describe('AuthService', () => {
       } as any;
 
       mockPrisma.user.findFirst.mockResolvedValue(existingUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      mockBcryptCompare.mockResolvedValue(false);
 
       await expect(service.login(dto)).rejects.toThrow('Invalid email or password');
     });
@@ -274,13 +283,13 @@ describe('AuthService', () => {
           email: 'john@example.com',
           fullname: 'John Doe',
           password: 'hashed',
-          role: 'STUDENT',
+          role: Role.student,
           institution: 'Test School',
           area_of_interest: 'Testing',
           is_verified: true,
         },
       });
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-otp');
+      mockBcryptHash.mockResolvedValue('hashed-otp');
 
       await service.forgotPassword({ email: 'john@example.com' } as any);
 
@@ -300,7 +309,7 @@ describe('AuthService', () => {
           email: 'reset@example.com',
           fullname: 'Reset User',
           password: 'old-hash',
-          role: 'STUDENT',
+          role: Role.student,
           institution: 'Test School',
           area_of_interest: 'Testing',
           is_verified: true,
@@ -313,8 +322,8 @@ describe('AuthService', () => {
         expiresAt: new Date(Date.now() + 60_000),
         usedAt: null,
       });
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('new-password-hash');
+      mockBcryptCompare.mockResolvedValue(true);
+      mockBcryptHash.mockResolvedValue('new-password-hash');
 
       await expect(
         service.resetPassword({
@@ -350,7 +359,7 @@ describe('AuthService', () => {
           email: 'reset@example.com',
           fullname: 'Reset User',
           password: 'old-hash',
-          role: 'STUDENT',
+          role: Role.student,
           institution: 'Test School',
           area_of_interest: 'Testing',
           is_verified: true,
@@ -363,7 +372,7 @@ describe('AuthService', () => {
         expiresAt: new Date(Date.now() + 60_000),
         usedAt: null,
       });
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      mockBcryptCompare.mockResolvedValue(false);
 
       await expect(
         service.resetPassword({
@@ -388,9 +397,8 @@ describe('AuthService', () => {
         profile: {
           email: 'callback@user.com',
           fullname: 'Callback User',
-          avatar: 'https://cdn.linkedin.com/avatar.jpg',
           password: 'hashed',
-          role: 'STUDENT',
+          role: Role.student,
         },
       } as any;
       // expected public shape after toPublicUser
@@ -398,8 +406,7 @@ describe('AuthService', () => {
         id: 3,
         email: 'callback@user.com',
         fullname: 'Callback User',
-        avatar: 'https://cdn.linkedin.com/avatar.jpg',
-        role: 'STUDENT',
+        role: Role.student,
       };
 
       mockFetch
@@ -413,20 +420,20 @@ describe('AuthService', () => {
             sub: 'li-456',
             email: 'callback@user.com',
             name: 'Callback User',
-            picture: 'https://cdn.linkedin.com/avatar.jpg',
           }),
         } as any);
 
       mockPrisma.authProvider.findUnique.mockResolvedValue(null);
       // ensure email lookup returns nothing so a new user is created
-      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValueOnce(null);
       // the only findUnique call we care about here is the final lookup after
       // creating the user; return the public profile.
       // final lookup should return the raw user object (with profile)
       mockPrisma.user.findUnique.mockResolvedValue(createdUser as any);
       mockPrisma.user.create.mockResolvedValue(createdUser);
-      mockPrisma.authProvider.upsert.mockResolvedValue({});
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed');
+      mockPrisma.user.findFirst.mockResolvedValue(createdUser as any);
+      mockPrisma.authProvider.create.mockResolvedValue({});
+      mockBcryptHash.mockResolvedValue('hashed');
 
       const result = await service.signInWithProviderCallback(AuthProviderType.LINKEDIN, dto);
 
@@ -435,23 +442,12 @@ describe('AuthService', () => {
           profile: expect.objectContaining({
             email: 'callback@user.com',
             fullname: 'Callback User',
-            avatar: 'https://cdn.linkedin.com/avatar.jpg',
-            role: 'STUDENT',
+            role: Role.student,
           }),
         }),
       });
-      expect(mockPrisma.authProvider.upsert).toHaveBeenCalledWith({
-        where: {
-          userId_provider: {
-            userId: 3,
-            provider: AuthProviderType.LINKEDIN,
-          },
-        },
-        update: {
-          providerUserId: 'li-456',
-          accessToken: 'access-token',
-        },
-        create: {
+      expect(mockPrisma.authProvider.create).toHaveBeenCalledWith({
+        data: {
           userId: 3,
           provider: AuthProviderType.LINKEDIN,
           providerUserId: 'li-456',
@@ -470,7 +466,7 @@ describe('AuthService', () => {
       expect(payload).toMatchObject({
         sub: 3,
         email: 'callback@user.com',
-        role: 'STUDENT',
+        role: Role.student,
       });
     });
 

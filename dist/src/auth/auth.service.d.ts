@@ -13,7 +13,6 @@ import { TokenRevocationService } from './token-revocation.service';
 type UserProfileData = {
     email: string;
     fullname: string;
-    avatar: string | null;
     password: string;
     role: Role;
     institution: string | null;
@@ -44,6 +43,7 @@ export declare class AuthService {
     private tokenRevocationService;
     private static readonly OTP_TTL_MS;
     private static readonly ACCESS_TOKEN_TTL_SECONDS;
+    private readonly logger;
     constructor(prisma: PrismaService, mailService: MailService, tokenRevocationService: TokenRevocationService);
     create(createAuthDto: CreateAuthDto): Promise<PublicUser>;
     login(dto: LoginDto): Promise<LoginResponse>;
@@ -70,7 +70,6 @@ export declare class AuthService {
     signInWithProviderCallback(provider: AuthProviderType, dto: ProviderSignInDto): Promise<AuthSessionResponse | null>;
     getProviderSignInUrl(provider: AuthProviderType): {
         url: string;
-        state: `${string}-${string}-${string}-${string}-${string}`;
     };
     private getProviderConfig;
     private validateProviderConfig;
@@ -78,16 +77,18 @@ export declare class AuthService {
     private fetchProviderProfile;
     private findOrCreateSocialUser;
     private upsertSocialProvider;
+    private syncSocialProfileFields;
     private findUserByEmail;
     private readUserProfile;
     private buildRoleProfile;
     private normalizeOptionalText;
     private normalizeOptionalEmail;
+    private resolveOptionalProfileField;
     private generateOtpCode;
     private issueAuthSession;
     private generateAccessToken;
     private getJwtSecret;
-    private finalizeLocalAvatarFilename;
     private toPublicUser;
+    private withErrorLogging;
 }
 export {};

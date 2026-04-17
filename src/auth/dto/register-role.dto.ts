@@ -1,75 +1,77 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../../generated/prisma/enums';
-import { IsEmail, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsIn, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  TrimString,
+  TrimToLowerCase,
+} from '../../common/transformers/normalized-string.transform';
 
 class RegisterCommonDto {
   @ApiProperty()
+  @TrimToLowerCase()
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @ApiProperty()
+  @TrimString()
   @IsString()
   @IsNotEmpty()
-  fullname: string;
+  fullname!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  password: string;
+  password!: string;
 
   @ApiProperty({ description: 'Required for all roles.' })
+  @TrimString()
   @IsNotEmpty({ message: 'area_of_interest is required' })
   @IsString()
-  area_of_interest: string;
-
-  @ApiPropertyOptional({
-    type: 'string',
-    format: 'binary',
-    description: 'Optional avatar image file for multipart/form-data requests.',
-  })
-  @IsOptional()
-  @IsString()
-  avatar?: string;
+  area_of_interest!: string;
 }
 
 export class StudentRegisterDto extends RegisterCommonDto {
-  @ApiProperty({ enum: [Role.STUDENT] })
+  @ApiProperty({ enum: [Role.student] })
   @IsEnum(Role)
-  @IsIn([Role.STUDENT])
-  role: 'STUDENT';
+  @IsIn([Role.student])
+  role!: 'student';
 
-  @ApiProperty({ description: 'Required for STUDENT role.' })
-  @IsNotEmpty({ message: 'institution is required for STUDENT role' })
+  @ApiProperty({ description: 'Required for student role.' })
+  @TrimString()
+  @IsNotEmpty({ message: 'institution is required for student role' })
   @IsString()
-  institution: string;
+  institution!: string;
 }
 
 export class EducatorRegisterDto extends RegisterCommonDto {
-  @ApiProperty({ enum: [Role.EDUCATOR] })
+  @ApiProperty({ enum: [Role.educator] })
   @IsEnum(Role)
-  @IsIn([Role.EDUCATOR])
-  role: 'EDUCATOR';
+  @IsIn([Role.educator])
+  role!: 'educator';
 
-  @ApiProperty({ description: 'Required for EDUCATOR role.' })
-  @IsNotEmpty({ message: 'institution is required for EDUCATOR role' })
+  @ApiProperty({ description: 'Required for educator role.' })
+  @TrimString()
+  @IsNotEmpty({ message: 'institution is required for educator role' })
   @IsString()
-  institution: string;
+  institution!: string;
 }
 
 export class CompanyRegisterDto extends RegisterCommonDto {
-  @ApiProperty({ enum: [Role.COMPANY] })
+  @ApiProperty({ enum: [Role.company] })
   @IsEnum(Role)
-  @IsIn([Role.COMPANY])
-  role: 'COMPANY';
+  @IsIn([Role.company])
+  role!: 'company';
 
-  @ApiProperty({ description: 'Required for COMPANY role.' })
-  @IsNotEmpty({ message: 'industry is required for COMPANY role' })
+  @ApiProperty({ description: 'Required for company role.' })
+  @TrimString()
+  @IsNotEmpty({ message: 'industry is required for company role' })
   @IsString()
-  industry: string;
+  industry!: string;
 
-  @ApiProperty({ description: 'Required for COMPANY role.' })
-  @IsNotEmpty({ message: 'company_email is required for COMPANY role' })
+  @ApiProperty({ description: 'Required for company role.' })
+  @TrimToLowerCase()
+  @IsNotEmpty({ message: 'company_email is required for company role' })
   @IsString()
-  company_email: string;
+  company_email!: string;
 }

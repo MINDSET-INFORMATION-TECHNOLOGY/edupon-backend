@@ -9,21 +9,10 @@ import {
   Param,
   Delete,
   UseGuards,
-  UploadedFile,
-  UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBody,
-  ApiQuery,
-  ApiConsumes,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthGuard } from '@nestjs/passport';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
@@ -39,11 +28,6 @@ import {
 import { AuthProviderType, Role } from '../generated/prisma/enums';
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject, ValidationError } from 'class-validator';
-import {
-  type UploadedFileLike,
-  imageUploadMulterOptions,
-  resolveUploadedFile,
-} from '../files/local-upload.config';
 
 @ApiTags('Auth')
 @Controller('')
@@ -52,51 +36,9 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new account' })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('avatar', imageUploadMulterOptions))
-  @ApiBody({
-    description:
-      'Role-based registration payload. Send as multipart/form-data. Use `avatar` as file field.',
-    schema: {
-      type: 'object',
-      properties: {
-        email: { type: 'string', format: 'email' },
-        fullname: { type: 'string' },
-        password: { type: 'string', minLength: 8 },
-        role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
-        institution: { type: 'string' },
-        industry: { type: 'string' },
-        company_email: { type: 'string' },
-        area_of_interest: { type: 'string' },
-        avatar: { type: 'string', format: 'binary' },
-      },
-      required: ['email', 'fullname', 'password', 'role', 'area_of_interest'],
-      example: {
-        email: 'user@example.com',
-        fullname: 'John Doe',
-        password: 'StrongPass123',
-        role: 'COMPANY',
-        industry: 'Technology',
-        company_email: 'hr@company.com',
-        area_of_interest: 'Computer Science',
-      },
-    },
-  })
   @ApiResponse({ status: 201, description: 'The account has been successfully created.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
-  create(@Body() createAuthDto: CreateAuthDto, @UploadedFile() avatarFile?: UploadedFileLike) {
-    // Ignore plain-text avatar payload on register; avatar must come from uploaded file.
-    createAuthDto.avatar = undefined;
-    const uploadedAvatar = resolveUploadedFile(avatarFile);
-    const role = createAuthDto.role?.toUpperCase();
-    if ((role === 'STUDENT' || role === 'EDUCATOR') && !uploadedAvatar) {
-      throw new BadRequestException('avatar is required for STUDENT and EDUCATOR');
-    }
-
-    if ((role === 'STUDENT' || role === 'EDUCATOR') && uploadedAvatar) {
-      createAuthDto.avatar = uploadedAvatar.url;
-    }
-
+  create(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.create(createAuthDto);
   }
 
@@ -110,12 +52,12 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
+        role: { type: 'string', enum: Object.values(Role) },
         token: { type: 'string' },
       },
       required: ['role', 'token'],
       example: {
-        role: 'STUDENT',
+        role: Role.student,
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
       },
     },
@@ -206,12 +148,12 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
+        role: { type: 'string', enum: Object.values(Role) },
         token: { type: 'string' },
       },
       required: ['role', 'token'],
       example: {
-        role: 'STUDENT',
+        role: Role.student,
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
       },
     },
@@ -238,7 +180,7 @@ export class AuthController {
     }
 
     return {
-      role: session.user.role ?? Role.STUDENT,
+      role: session.user.role ?? Role.student,
       token: session.tokens.access_token,
     };
   }

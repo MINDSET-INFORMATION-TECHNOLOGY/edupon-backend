@@ -15,9 +15,9 @@ datasource db {
 }
 
 enum Role {
-  STUDENT
-  EDUCATOR
-  COMPANY
+  student
+  educator
+  company
 }
 
 enum AuthProviderType {

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LinkedInSignInDto = exports.GoogleSignInDto = exports.SocialSignInDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
+const normalized_string_transform_1 = require("../../common/transformers/normalized-string.transform");
 class SocialSignInDto {
     code;
     scope;
@@ -19,6 +20,7 @@ class SocialSignInDto {
 exports.SocialSignInDto = SocialSignInDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'oauth-authorization-code' }),
+    (0, normalized_string_transform_1.TrimString)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
@@ -26,6 +28,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: 'openid email profile' }),
     (0, class_validator_1.IsOptional)(),
+    (0, normalized_string_transform_1.OptionalTrimString)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SocialSignInDto.prototype, "scope", void 0);
@@ -37,12 +40,14 @@ exports.GoogleSignInDto = GoogleSignInDto;
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'OpenID prompt value, e.g. consent' }),
     (0, class_validator_1.IsOptional)(),
+    (0, normalized_string_transform_1.OptionalTrimString)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], GoogleSignInDto.prototype, "prompt", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Authuser index from Google' }),
     (0, class_validator_1.IsOptional)(),
+    (0, normalized_string_transform_1.OptionalTrimString)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], GoogleSignInDto.prototype, "authuser", void 0);

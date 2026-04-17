@@ -21,20 +21,21 @@ let MailService = class MailService {
         const subject = process.env.MAIL_OTP_SUBJECT?.trim() || `${appName} OTP Verification`;
         const greetingName = input.fullname?.trim() || 'there';
         const expiryTime = input.expiresAt.toISOString();
-        const text = [
-            `Hello ${greetingName},`,
-            '',
-            `Your verification code is: ${input.otp}`,
-            '',
-            `This code expires at ${expiryTime} and is valid for up to 5 minutes.`,
-            '',
-            `If you did not request this code, ignore this email.`,
-        ].join('\n');
-        const html = this.renderOtpTemplate({
+        const text = this.buildCodeEmailText({
+            greetingName,
+            code: input.otp,
+            codeLabel: 'verification code',
+            expiryTime,
+            ignoreMessage: 'If you did not request this code, ignore this email.',
+        });
+        const html = this.renderCodeTemplate({
             appName,
             greetingName,
-            otp: input.otp,
+            code: input.otp,
+            codeLabel: 'verification code',
             expiryTime,
+            ignoreMessage: 'If you did not request this code, ignore this email.',
+            renderErrorMessage: 'Failed to render OTP email template',
         });
         await this.getTransporter().sendMail({
             from,
@@ -50,20 +51,21 @@ let MailService = class MailService {
         const subject = process.env.MAIL_PASSWORD_RESET_SUBJECT?.trim() || `${appName} Password Reset`;
         const greetingName = input.fullname?.trim() || 'there';
         const expiryTime = input.expiresAt.toISOString();
-        const text = [
-            `Hello ${greetingName},`,
-            '',
-            `Your password reset code is: ${input.otp}`,
-            '',
-            `This code expires at ${expiryTime} and is valid for up to 5 minutes.`,
-            '',
-            `If you did not request this reset, ignore this email.`,
-        ].join('\n');
-        const html = this.renderPasswordResetTemplate({
+        const text = this.buildCodeEmailText({
+            greetingName,
+            code: input.otp,
+            codeLabel: 'password reset code',
+            expiryTime,
+            ignoreMessage: 'If you did not request this reset, ignore this email.',
+        });
+        const html = this.renderCodeTemplate({
             appName,
             greetingName,
-            otp: input.otp,
+            code: input.otp,
+            codeLabel: 'password reset code',
             expiryTime,
+            ignoreMessage: 'If you did not request this reset, ignore this email.',
+            renderErrorMessage: 'Failed to render password reset email template',
         });
         await this.getTransporter().sendMail({
             from,
@@ -93,46 +95,18 @@ let MailService = class MailService {
         });
         return this.transporter;
     }
-    renderOtpTemplate(input) {
-        const mjmlTemplate = `
-      <mjml>
-        <mj-body background-color="#ffffff">
-          <mj-section background-color="#0b5ed7" padding="20px">
-            <mj-column>
-              <mj-text align="center" color="#ffffff" font-size="22px" font-weight="700">
-                ${this.escapeHtml(input.appName)}
-              </mj-text>
-            </mj-column>
-          </mj-section>
-          <mj-section background-color="#ffffff" padding="24px">
-            <mj-column>
-              <mj-text color="#000000" font-size="16px">
-                Hello ${this.escapeHtml(input.greetingName)},
-              </mj-text>
-              <mj-text color="#000000" font-size="16px">
-                Your verification code is:
-              </mj-text>
-              <mj-text align="center" color="#000000" font-size="28px" font-weight="700">
-                ${this.escapeHtml(input.otp)}
-              </mj-text>
-              <mj-text color="#000000" font-size="14px">
-                This code expires at ${this.escapeHtml(input.expiryTime)} and is valid for up to 5 minutes.
-              </mj-text>
-              <mj-text color="#000000" font-size="14px">
-                If you did not request this code, ignore this email.
-              </mj-text>
-            </mj-column>
-          </mj-section>
-        </mj-body>
-      </mjml>
-    `;
-        const rendered = (0, mjml_1.default)(mjmlTemplate, { validationLevel: 'strict' });
-        if (rendered.errors.length > 0) {
-            throw new common_1.InternalServerErrorException('Failed to render OTP email template');
-        }
-        return rendered.html;
+    buildCodeEmailText(input) {
+        return [
+            `Hello ${input.greetingName},`,
+            '',
+            `Your ${input.codeLabel} is: ${input.code}`,
+            '',
+            `This code expires at ${input.expiryTime} and is valid for up to 5 minutes.`,
+            '',
+            input.ignoreMessage,
+        ].join('\n');
     }
-    renderPasswordResetTemplate(input) {
+    renderCodeTemplate(input) {
         const mjmlTemplate = `
       <mjml>
         <mj-body background-color="#ffffff">
@@ -149,16 +123,16 @@ let MailService = class MailService {
                 Hello ${this.escapeHtml(input.greetingName)},
               </mj-text>
               <mj-text color="#000000" font-size="16px">
-                Your password reset code is:
+                Your ${this.escapeHtml(input.codeLabel)} is:
               </mj-text>
               <mj-text align="center" color="#000000" font-size="28px" font-weight="700">
-                ${this.escapeHtml(input.otp)}
+                ${this.escapeHtml(input.code)}
               </mj-text>
               <mj-text color="#000000" font-size="14px">
                 This code expires at ${this.escapeHtml(input.expiryTime)} and is valid for up to 5 minutes.
               </mj-text>
               <mj-text color="#000000" font-size="14px">
-                If you did not request this reset, ignore this email.
+                ${this.escapeHtml(input.ignoreMessage)}
               </mj-text>
             </mj-column>
           </mj-section>
@@ -167,7 +141,7 @@ let MailService = class MailService {
     `;
         const rendered = (0, mjml_1.default)(mjmlTemplate, { validationLevel: 'strict' });
         if (rendered.errors.length > 0) {
-            throw new common_1.InternalServerErrorException('Failed to render password reset email template');
+            throw new common_1.InternalServerErrorException(input.renderErrorMessage);
         }
         return rendered.html;
     }
