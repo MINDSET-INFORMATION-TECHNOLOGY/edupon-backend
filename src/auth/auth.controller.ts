@@ -236,6 +236,7 @@ export class AuthController {
     }
 
     return {
+      role: session.user.role,
       token: session.tokens.access_token,
     };
   }

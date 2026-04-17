@@ -1,1 +1,3 @@
-module.exports = require('./prismaNamespaceBrowser.ts');
+"use strict";
+
+module.exports = require("./prismaNamespaceBrowser.ts");

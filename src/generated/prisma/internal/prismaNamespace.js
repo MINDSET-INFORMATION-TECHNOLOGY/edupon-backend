@@ -1,1 +1,2 @@
-module.exports = require('./prismaNamespace.ts');
+"use strict";
+module.exports = require("./prismaNamespace.ts");

@@ -15,6 +15,7 @@ export declare const ModelName: {
     readonly AuthProvider: "AuthProvider";
     readonly UserOtp: "UserOtp";
     readonly UserPasswordReset: "UserPasswordReset";
+    readonly Portfolio: "Portfolio";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export declare const TransactionIsolationLevel: {
@@ -61,6 +62,18 @@ export declare const UserPasswordResetScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
 };
 export type UserPasswordResetScalarFieldEnum = (typeof UserPasswordResetScalarFieldEnum)[keyof typeof UserPasswordResetScalarFieldEnum];
+export declare const PortfolioScalarFieldEnum: {
+    readonly id: "id";
+    readonly fullName: "fullName";
+    readonly email: "email";
+    readonly bio: "bio";
+    readonly skills: "skills";
+    readonly portfolioLink: "portfolioLink";
+    readonly userId: "userId";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type PortfolioScalarFieldEnum = (typeof PortfolioScalarFieldEnum)[keyof typeof PortfolioScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";

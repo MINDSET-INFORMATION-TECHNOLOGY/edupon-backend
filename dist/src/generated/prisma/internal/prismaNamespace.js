@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.JsonNullValueFilter = exports.NullableJsonNullValueInput = exports.SortOrder = exports.UserPasswordResetScalarFieldEnum = exports.UserOtpScalarFieldEnum = exports.AuthProviderScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.JsonNullValueFilter = exports.NullableJsonNullValueInput = exports.SortOrder = exports.PortfolioScalarFieldEnum = exports.UserPasswordResetScalarFieldEnum = exports.UserOtpScalarFieldEnum = exports.AuthProviderScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/client"));
 exports.PrismaClientKnownRequestError = runtime.PrismaClientKnownRequestError;
 exports.PrismaClientUnknownRequestError = runtime.PrismaClientUnknownRequestError;
@@ -63,7 +63,8 @@ exports.ModelName = {
     User: 'User',
     AuthProvider: 'AuthProvider',
     UserOtp: 'UserOtp',
-    UserPasswordReset: 'UserPasswordReset'
+    UserPasswordReset: 'UserPasswordReset',
+    Portfolio: 'Portfolio'
 };
 exports.TransactionIsolationLevel = runtime.makeStrictEnum({
     ReadUncommitted: 'ReadUncommitted',
@@ -101,6 +102,17 @@ exports.UserPasswordResetScalarFieldEnum = {
     codeHash: 'codeHash',
     expiresAt: 'expiresAt',
     usedAt: 'usedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.PortfolioScalarFieldEnum = {
+    id: 'id',
+    fullName: 'fullName',
+    email: 'email',
+    bio: 'bio',
+    skills: 'skills',
+    portfolioLink: 'portfolioLink',
+    userId: 'userId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

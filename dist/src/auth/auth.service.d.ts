@@ -70,7 +70,6 @@ export declare class AuthService {
     signInWithProviderCallback(provider: AuthProviderType, dto: ProviderSignInDto): Promise<AuthSessionResponse | null>;
     getProviderSignInUrl(provider: AuthProviderType): {
         url: string;
-        state: `${string}-${string}-${string}-${string}-${string}`;
     };
     private getProviderConfig;
     private validateProviderConfig;
@@ -78,6 +77,7 @@ export declare class AuthService {
     private fetchProviderProfile;
     private findOrCreateSocialUser;
     private upsertSocialProvider;
+    private syncSocialProfileFields;
     private findUserByEmail;
     private readUserProfile;
     private buildRoleProfile;
@@ -87,7 +87,6 @@ export declare class AuthService {
     private issueAuthSession;
     private generateAccessToken;
     private getJwtSecret;
-    private finalizeLocalAvatarFilename;
     private toPublicUser;
 }
 export {};

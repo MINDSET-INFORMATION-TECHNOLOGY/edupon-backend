@@ -45,7 +45,11 @@ __decorate([
     __metadata("design:type", String)
 ], RegisterCommonDto.prototype, "area_of_interest", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
+    (0, swagger_1.ApiPropertyOptional)({
+        type: 'string',
+        format: 'binary',
+        description: 'Optional avatar image file for multipart/form-data requests.',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

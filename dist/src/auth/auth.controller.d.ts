@@ -5,15 +5,11 @@ import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { type UploadedFileLike } from '../files/local-upload.config';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
-    create(createAuthDto: CreateAuthDto, avatarFile?: {
-        filename?: string;
-    }, req?: {
-        protocol?: string;
-        get?: (name: string) => string;
-    }): Promise<Omit<{
+    create(createAuthDto: CreateAuthDto, avatarFile?: UploadedFileLike): Promise<Omit<{
         email: string;
         fullname: string;
         avatar: string | null;
@@ -50,28 +46,11 @@ export declare class AuthController {
     }>;
     getProviderSignInUrl(provider: string): {
         url: string;
-        state: `${string}-${string}-${string}-${string}-${string}`;
     };
     signInWithProviderCallback(provider: string, query: Record<string, any>): Promise<{
-        user: Omit<{
-            email: string;
-            fullname: string;
-            avatar: string | null;
-            password: string;
-            role: import("../generated/prisma/enums").Role;
-            institution: string | null;
-            industry: string | null;
-            area_of_interest: string | null;
-            company_email: string | null;
-            is_verified: boolean;
-        }, "password"> & {
-            id: number;
-        };
-        tokens: {
-            token_type: "Bearer";
-            access_token: string;
-            expires_in: number;
-        };
+        token: string;
     }>;
     private parseProvider;
+    private validateProviderQuery;
+    private formatValidationError;
 }

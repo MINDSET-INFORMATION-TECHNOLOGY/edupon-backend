@@ -603,7 +603,7 @@ export class AuthService {
       fullname: dto.fullname,
       avatar: dto.avatar ?? null,
       password: await bcrypt.hash(randomUUID(), 10),
-      role: null,
+      role: Role.STUDENT,
       institution: 'Not provided',
       industry: null,
       area_of_interest: 'General',
