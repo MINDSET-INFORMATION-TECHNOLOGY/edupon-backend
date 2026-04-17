@@ -1,7 +1,7 @@
 export declare const Role: {
-    readonly STUDENT: "STUDENT";
-    readonly EDUCATOR: "EDUCATOR";
-    readonly COMPANY: "COMPANY";
+    readonly student: "student";
+    readonly educator: "educator";
+    readonly company: "company";
 };
 export type Role = (typeof Role)[keyof typeof Role];
 export declare const AuthProviderType: {

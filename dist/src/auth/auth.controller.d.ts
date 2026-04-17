@@ -5,16 +5,15 @@ import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { type UploadedFileLike } from '../files/local-upload.config';
+import { Role } from '../generated/prisma/enums';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
-    create(createAuthDto: CreateAuthDto, avatarFile?: UploadedFileLike): Promise<Omit<{
+    create(createAuthDto: CreateAuthDto): Promise<Omit<{
         email: string;
         fullname: string;
-        avatar: string | null;
         password: string;
-        role: import("../generated/prisma/enums").Role;
+        role: Role;
         institution: string | null;
         industry: string | null;
         area_of_interest: string | null;
@@ -24,7 +23,7 @@ export declare class AuthController {
         id: number;
     }>;
     login(loginDto: LoginDto): Promise<{
-        role: import("../generated/prisma/enums").Role;
+        role: Role;
         token: string;
     }>;
     me(req: any): any;
@@ -48,6 +47,7 @@ export declare class AuthController {
         url: string;
     };
     signInWithProviderCallback(provider: string, query: Record<string, any>): Promise<{
+        role: Role;
         token: string;
     }>;
     private parseProvider;

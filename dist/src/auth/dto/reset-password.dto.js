@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResetPasswordDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
+const normalized_string_transform_1 = require("../../common/transformers/normalized-string.transform");
 class ResetPasswordDto {
     email;
     otp;
@@ -20,12 +21,14 @@ class ResetPasswordDto {
 exports.ResetPasswordDto = ResetPasswordDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'alice@example.com' }),
+    (0, normalized_string_transform_1.TrimToLowerCase)(),
     (0, class_validator_1.IsEmail)({}, { message: 'Please provide a valid email address' }),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '123456', description: '6-digit reset code' }),
+    (0, normalized_string_transform_1.TrimString)(),
     (0, class_validator_1.Matches)(/^\d{6}$/, { message: 'otp must be a 6-digit numeric code' }),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)

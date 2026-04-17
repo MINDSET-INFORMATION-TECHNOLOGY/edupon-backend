@@ -10,7 +10,11 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const port = Number(process.env.PORT ?? 3000);
     (0, local_upload_config_1.ensureUploadDirectories)();
-    app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+    }));
     app.setGlobalPrefix('api');
     if (local_upload_config_1.isLocalUploadDriver) {
         app.useStaticAssets(local_upload_config_1.LOCAL_UPLOAD_ROOT, { prefix: `${local_upload_config_1.UPLOAD_PUBLIC_PREFIX}/` });

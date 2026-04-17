@@ -133,13 +133,14 @@ describe('Auth registration (e2e)', () => {
   it('/api/register (POST) registers a user', () => {
     return request(app.getHttpServer())
       .post('/api/register')
-      .field('email', 'bob@example.com')
-      .field('fullname', 'Bob Builder')
-      .field('password', 'secret987')
-      .field('role', 'STUDENT')
-      .field('institution', 'Test University')
-      .field('area_of_interest', 'Computer Science')
-      .attach('avatar', Buffer.from('fake-image'), { filename: 'avatar.jpg', contentType: 'image/jpeg' })
+      .send({
+        email: 'bob@example.com',
+        fullname: 'Bob Builder',
+        password: 'secret987',
+        role: 'student',
+        institution: 'Test University',
+        area_of_interest: 'Computer Science',
+      })
       .expect(201)
       .expect(fakeUser);
   });

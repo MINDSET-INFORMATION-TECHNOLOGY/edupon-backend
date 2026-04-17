@@ -3,7 +3,6 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   IsString,
   MinLength,
   Validate,
@@ -13,6 +12,12 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import isEmail from 'validator/lib/isEmail';
+import {
+  OptionalTrimString,
+  OptionalTrimToLowerCase,
+  TrimString,
+  TrimToLowerCase,
+} from '../../common/transformers/normalized-string.transform';
 
 const PERSONAL_EMAIL_DOMAINS = new Set([
   'gmail.com',
@@ -55,19 +60,21 @@ class IsCompanyEmailConstraint implements ValidatorConstraintInterface {
 
 export class CreateAuthDto {
   @ApiProperty({ example: 'alice@example.com' })
+  @TrimToLowerCase()
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'Alice Doe' })
+  @TrimString()
   @IsString()
   @IsNotEmpty()
-  fullname: string;
+  fullname!: string;
 
   @ApiProperty({ example: 'strongPassword123' })
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  password: string;
+  password!: string;
 
   @ApiProperty({
     enum: Role,
@@ -75,46 +82,45 @@ export class CreateAuthDto {
   })
   @IsEnum(Role, { message: 'Invalid role provided' })
   @IsNotEmpty()
-  role: Role;
-  
+  role!: Role;
+
   @ApiPropertyOptional({
     example: 'Some University',
-    description: 'Required when role is STUDENT or EDUCATOR.',
+    description: 'Required when role is student or educator.',
   })
-  @ValidateIf((o: CreateAuthDto) => o.role === Role.STUDENT || o.role === Role.EDUCATOR)
-  @IsNotEmpty({ message: 'institution is required for STUDENT or EDUCATOR role' })
+  @OptionalTrimString()
+  @ValidateIf((o: CreateAuthDto) => o.role === Role.student || o.role === Role.educator)
+  @IsNotEmpty({ message: 'institution is required for student or educator role' })
   @IsString()
-  institution?: string;
+  institution!: string;
 
   @ApiProperty({
     example: 'Computer Science',
     description: 'Required for all roles.',
   })
+  @TrimString()
   @IsNotEmpty({ message: 'area_of_interest is required' })
   @IsString()
-  area_of_interest: string;
-
-  @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
-  @IsOptional()
-  @IsString()
-  avatar?: string;
+  area_of_interest!: string;
 
   @ApiPropertyOptional({
     example: 'Information Technology',
-    description: 'Required when role is COMPANY.',
+    description: 'Required when role is company.',
   })
-  @ValidateIf((o: CreateAuthDto) => o.role === Role.COMPANY)
-  @IsNotEmpty({ message: 'industry is required for COMPANY role' })
+  @OptionalTrimString()
+  @ValidateIf((o: CreateAuthDto) => o.role === Role.company)
+  @IsNotEmpty({ message: 'industry is required for company role' })
   @IsString()
-  industry?: string;
+  industry!: string;
 
   @ApiPropertyOptional({
     example: 'contact@acme.com',
-    description: 'Required when role is COMPANY. Must be a business email domain.',
+    description: 'Required when role is company. Must be a business email domain.',
   })
-  @ValidateIf((o: CreateAuthDto) => o.role === Role.COMPANY)
-  @IsNotEmpty({ message: 'company_email is required for COMPANY role' })
+  @OptionalTrimToLowerCase()
+  @ValidateIf((o: CreateAuthDto) => o.role === Role.company)
+  @IsNotEmpty({ message: 'company_email is required for company role' })
   @IsString()
   @Validate(IsCompanyEmailConstraint)
-  company_email?: string;
+  company_email!: string;
 }

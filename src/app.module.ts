@@ -3,10 +3,10 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { RequestTimeoutInterceptor } from './common/interceptors/request-timeout.interceptor';
 import { PortfolioModule } from './portfolio/portfolio.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [

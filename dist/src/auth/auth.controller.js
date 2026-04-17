@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const throttler_1 = require("@nestjs/throttler");
 const passport_1 = require("@nestjs/passport");
-const platform_express_1 = require("@nestjs/platform-express");
 const auth_service_1 = require("./auth.service");
 const create_auth_dto_1 = require("./dto/create-auth.dto");
 const login_dto_1 = require("./dto/login.dto");
@@ -29,22 +28,12 @@ const social_signin_dto_1 = require("./dto/social-signin.dto");
 const enums_1 = require("../generated/prisma/enums");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
-const local_upload_config_1 = require("../files/local-upload.config");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
         this.authService = authService;
     }
-    create(createAuthDto, avatarFile) {
-        createAuthDto.avatar = undefined;
-        const uploadedAvatar = (0, local_upload_config_1.resolveUploadedFile)(avatarFile);
-        const role = createAuthDto.role?.toUpperCase();
-        if ((role === 'STUDENT' || role === 'EDUCATOR') && !uploadedAvatar) {
-            throw new common_1.BadRequestException('avatar is required for STUDENT and EDUCATOR');
-        }
-        if ((role === 'STUDENT' || role === 'EDUCATOR') && uploadedAvatar) {
-            createAuthDto.avatar = uploadedAvatar.url;
-        }
+    create(createAuthDto) {
         return this.authService.create(createAuthDto);
     }
     login(loginDto) {
@@ -85,6 +74,7 @@ let AuthController = class AuthController {
             throw new common_1.BadRequestException('Unable to sign in with provider');
         }
         return {
+            role: session.user.role ?? enums_1.Role.student,
             token: session.tokens.access_token,
         };
     }
@@ -120,41 +110,11 @@ exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('register'),
     (0, swagger_1.ApiOperation)({ summary: 'Register a new account' }),
-    (0, swagger_1.ApiConsumes)('multipart/form-data'),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('avatar', local_upload_config_1.imageUploadMulterOptions)),
-    (0, swagger_1.ApiBody)({
-        description: 'Role-based registration payload. Send as multipart/form-data. Use `avatar` as file field.',
-        schema: {
-            type: 'object',
-            properties: {
-                email: { type: 'string', format: 'email' },
-                fullname: { type: 'string' },
-                password: { type: 'string', minLength: 8 },
-                role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
-                institution: { type: 'string' },
-                industry: { type: 'string' },
-                company_email: { type: 'string' },
-                area_of_interest: { type: 'string' },
-                avatar: { type: 'string', format: 'binary' },
-            },
-            required: ['email', 'fullname', 'password', 'role', 'area_of_interest'],
-            example: {
-                email: 'user@example.com',
-                fullname: 'John Doe',
-                password: 'StrongPass123',
-                role: 'COMPANY',
-                industry: 'Technology',
-                company_email: 'hr@company.com',
-                area_of_interest: 'Computer Science',
-            },
-        },
-    }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'The account has been successfully created.' }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Bad request.' }),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_auth_dto_1.CreateAuthDto, Object]),
+    __metadata("design:paramtypes", [create_auth_dto_1.CreateAuthDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "create", null);
 __decorate([
@@ -168,12 +128,12 @@ __decorate([
         schema: {
             type: 'object',
             properties: {
-                role: { type: 'string', enum: ['STUDENT', 'EDUCATOR', 'COMPANY'] },
+                role: { type: 'string', enum: Object.values(enums_1.Role) },
                 token: { type: 'string' },
             },
             required: ['role', 'token'],
             example: {
-                role: 'STUDENT',
+                role: enums_1.Role.student,
                 token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
             },
         },
@@ -280,10 +240,12 @@ __decorate([
         schema: {
             type: 'object',
             properties: {
+                role: { type: 'string', enum: Object.values(enums_1.Role) },
                 token: { type: 'string' },
             },
-            required: ['token'],
+            required: ['role', 'token'],
             example: {
+                role: enums_1.Role.student,
                 token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
             },
         },

@@ -3,19 +3,19 @@ import { IsString, IsEmail, IsUrl, IsArray, IsNotEmpty } from "class-validator";
 export class CreatePortfolioDto {
     @IsString()
     @IsNotEmpty()
-    fullName: string;
+    fullName!: string;
 
     @IsEmail()
-    email: string;
+    email!: string;
 
     @IsString()
     @IsNotEmpty()
-    bio: string;
+    bio!: string;
 
     @IsArray()
     @IsString({ each: true })
-    skills: string[];
+    skills!: string[];
 
     @IsUrl()
-    portfolioLink: string;
+    portfolioLink!: string;
 }

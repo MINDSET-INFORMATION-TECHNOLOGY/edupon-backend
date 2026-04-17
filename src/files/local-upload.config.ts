@@ -56,7 +56,7 @@ const DEFAULT_FILE_EXTENSIONS = [
   '.zip',
 ];
 
-const IMAGE_FOLDER = 'uploads/avatar';
+const IMAGE_FOLDER = 'uploads/images';
 const FILE_FOLDER = 'uploads/docs';
 const DEFAULT_S3_REGION = 'us-east-1';
 const DEFAULT_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;

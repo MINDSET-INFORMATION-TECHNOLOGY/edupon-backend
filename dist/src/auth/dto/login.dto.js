@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoginDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
+const normalized_string_transform_1 = require("../../common/transformers/normalized-string.transform");
 class LoginDto {
     email;
     password;
@@ -19,14 +20,13 @@ class LoginDto {
 exports.LoginDto = LoginDto;
 __decorate([
     (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsOptional)(),
+    (0, normalized_string_transform_1.TrimToLowerCase)(),
     (0, class_validator_1.IsEmail)({}, { message: 'Please provide a valid email address' }),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], LoginDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
