@@ -5,9 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output          = "../src/generated/prisma"
-  moduleFormat  = "cjs"
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -26,47 +25,61 @@ enum AuthProviderType {
 }
 
 model User {
-  id              Int      @id @default(autoincrement())
+  id              Int                @id @default(autoincrement())
   profile         Json?
   authProviders   AuthProvider[]
   otpVerification UserOtp?
   passwordReset   UserPasswordReset?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  portfolio       Portfolio?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 }
 
 model AuthProvider {
-  id           String   @id @default(uuid())
-  userId       Int
-  provider     AuthProviderType
+  id             String           @id @default(uuid())
+  userId         Int
+  provider       AuthProviderType
   providerUserId String
-  accessToken  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  accessToken    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerUserId])
   @@unique([userId, provider])
 }
 
 model UserOtp {
-  id         String   @id @default(uuid())
-  userId     Int      @unique
+  id         String    @id @default(uuid())
+  userId     Int       @unique
   codeHash   String
   expiresAt  DateTime
   verifiedAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserPasswordReset {
-  id         String   @id @default(uuid())
-  userId     Int      @unique
-  codeHash   String
-  expiresAt  DateTime
-  usedAt     DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String    @id @default(uuid())
+  userId    Int       @unique
+  codeHash  String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Portfolio {
+  id            Int      @id @default(autoincrement())
+  fullName      String
+  email         String   @unique
+  bio           String
+  skills        String[]
+  portfolioLink String
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

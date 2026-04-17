@@ -161,6 +161,7 @@ export declare const ModelName: {
     readonly AuthProvider: "AuthProvider";
     readonly UserOtp: "UserOtp";
     readonly UserPasswordReset: "UserPasswordReset";
+    readonly Portfolio: "Portfolio";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export interface TypeMapCb<GlobalOmitOptions = {}> extends runtime.Types.Utils.Fn<{
@@ -173,7 +174,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "user" | "authProvider" | "userOtp" | "userPasswordReset";
+        modelProps: "user" | "authProvider" | "userOtp" | "userPasswordReset" | "portfolio";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -473,6 +474,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
+        Portfolio: {
+            payload: Prisma.$PortfolioPayload<ExtArgs>;
+            fields: Prisma.PortfolioFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.PortfolioFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.PortfolioFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>;
+                };
+                findFirst: {
+                    args: Prisma.PortfolioFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.PortfolioFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>;
+                };
+                findMany: {
+                    args: Prisma.PortfolioFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>[];
+                };
+                create: {
+                    args: Prisma.PortfolioCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>;
+                };
+                createMany: {
+                    args: Prisma.PortfolioCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.PortfolioCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>[];
+                };
+                delete: {
+                    args: Prisma.PortfolioDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>;
+                };
+                update: {
+                    args: Prisma.PortfolioUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.PortfolioDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.PortfolioUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.PortfolioUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>[];
+                };
+                upsert: {
+                    args: Prisma.PortfolioUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioPayload>;
+                };
+                aggregate: {
+                    args: Prisma.PortfolioAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregatePortfolio>;
+                };
+                groupBy: {
+                    args: Prisma.PortfolioGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.PortfolioGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.PortfolioCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.PortfolioCountAggregateOutputType> | number;
+                };
+            };
+        };
     };
 } & {
     other: {
@@ -541,6 +616,18 @@ export declare const UserPasswordResetScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
 };
 export type UserPasswordResetScalarFieldEnum = (typeof UserPasswordResetScalarFieldEnum)[keyof typeof UserPasswordResetScalarFieldEnum];
+export declare const PortfolioScalarFieldEnum: {
+    readonly id: "id";
+    readonly fullName: "fullName";
+    readonly email: "email";
+    readonly bio: "bio";
+    readonly skills: "skills";
+    readonly portfolioLink: "portfolioLink";
+    readonly userId: "userId";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type PortfolioScalarFieldEnum = (typeof PortfolioScalarFieldEnum)[keyof typeof PortfolioScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";
@@ -607,6 +694,7 @@ export type GlobalOmitConfig = {
     authProvider?: Prisma.AuthProviderOmit;
     userOtp?: Prisma.UserOtpOmit;
     userPasswordReset?: Prisma.UserPasswordResetOmit;
+    portfolio?: Prisma.PortfolioOmit;
 };
 export type LogLevel = 'info' | 'query' | 'warn' | 'error';
 export type LogDefinition = {

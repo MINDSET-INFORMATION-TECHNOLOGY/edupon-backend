@@ -57,3 +57,8 @@ export type UserOtp = Prisma.UserOtpModel
  * 
  */
 export type UserPasswordReset = Prisma.UserPasswordResetModel
+/**
+ * Model Portfolio
+ * 
+ */
+export type Portfolio = Prisma.PortfolioModel

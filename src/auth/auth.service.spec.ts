@@ -64,6 +64,7 @@ const mockPrisma = {
     upsert: jest.fn(),
     create: jest.fn(),
     updateMany: jest.fn(),
+    update: jest.fn(),
   },
 } as any;
 
@@ -423,15 +424,16 @@ describe('AuthService', () => {
           }),
         } as any);
 
-      mockPrisma.authProvider.findUnique.mockResolvedValue(null);
-      // ensure email lookup returns nothing so a new user is created
-      mockPrisma.user.findFirst.mockResolvedValueOnce(null);
-      // the only findUnique call we care about here is the final lookup after
-      // creating the user; return the public profile.
-      // final lookup should return the raw user object (with profile)
-      mockPrisma.user.findUnique.mockResolvedValue(createdUser as any);
+      // first call: no existing provider for this providerUserId
+      // second call: no existing provider for this user (after user creation)
+      mockPrisma.authProvider.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      // first call: email lookup returns null (new user); second call: final lookup returns createdUser
+      mockPrisma.user.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(createdUser);
       mockPrisma.user.create.mockResolvedValue(createdUser);
-      mockPrisma.user.findFirst.mockResolvedValue(createdUser as any);
       mockPrisma.authProvider.create.mockResolvedValue({});
       mockBcryptHash.mockResolvedValue('hashed');
 
