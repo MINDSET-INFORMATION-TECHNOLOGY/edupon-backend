@@ -31,12 +31,12 @@ type OAuthTokenPayload = {
 type OAuthProfile = {
   providerUserId: string;
   email: string;
-  fullname: string;
+  full_name: string;
 };
 
 type UserProfileData = {
   email: string;
-  fullname: string;
+  full_name: string;
   password: string;
   role: Role;
   institution: string | null;
@@ -48,7 +48,7 @@ type UserProfileData = {
 
 type RoleProfileInput = {
   email: string;
-  fullname: string;
+  full_name: string;
   password: string;
   role: Role;
   institution?: string | null;
@@ -110,7 +110,7 @@ export class AuthService {
       const hashed = await bcrypt.hash(createAuthDto.password, 10);
       const profile = this.buildRoleProfile({
         email: normalizedEmail,
-        fullname: createAuthDto.fullname,
+full_name: createAuthDto.full_name,
         password: hashed,
         role: createAuthDto.role,
         institution: createAuthDto.institution,
@@ -237,7 +237,7 @@ export class AuthService {
 
       const nextProfile = this.buildRoleProfile({
         email: normalizedNextEmail,
-        fullname: updateAuthDto.fullname ?? currentProfile.fullname,
+full_name: updateAuthDto.full_name ?? currentProfile.full_name,
         password: nextPassword,
         role: updateAuthDto.role ?? currentProfile.role,
         institution: this.resolveOptionalProfileField(updateAuthDto, 'institution', currentProfile.institution),
@@ -308,7 +308,7 @@ export class AuthService {
         to: email,
         otp,
         expiresAt,
-        fullname: currentProfile.fullname,
+        fullname: currentProfile.full_name,
       });
 
       this.logger.log(`OTP issued for user ${user.id}; expires at ${expiresAt.toISOString()}`);
@@ -354,7 +354,7 @@ export class AuthService {
         to: email,
         otp,
         expiresAt,
-        fullname: currentProfile.fullname,
+        fullname: currentProfile.full_name,
       });
 
       this.logger.log(`Password reset OTP issued for user ${user.id}; expires at ${expiresAt.toISOString()}`);
@@ -489,7 +489,7 @@ export class AuthService {
       const payload: SocialSignInPayload = {
         providerUserId: profile.providerUserId,
         email: profile.email,
-        fullname: profile.fullname,
+        fullname: profile.full_name,
         accessToken: tokens.accessToken,
       };
 
@@ -606,7 +606,7 @@ export class AuthService {
     return {
       providerUserId: payload.sub,
       email: payload.email,
-      fullname,
+      full_name: fullname,
     };
     }
 
@@ -630,7 +630,7 @@ export class AuthService {
     return {
       providerUserId: payload.sub,
       email: payload.email,
-      fullname,
+      full_name: fullname,
     };
   }
 
@@ -646,7 +646,7 @@ export class AuthService {
 
     const profile = this.buildRoleProfile({
       email: dto.email,
-      fullname: dto.fullname,
+      full_name: dto.fullname,
       password: await bcrypt.hash(randomUUID(), 10),
       role: Role.student,
       institution: 'Not provided',
@@ -727,7 +727,7 @@ export class AuthService {
 
     const shouldUpdate =
       (!!nextEmail && nextEmail !== currentProfile.email) ||
-      (!!nextFullname && nextFullname !== currentProfile.fullname);
+      (!!nextFullname && nextFullname !== currentProfile.full_name);
 
     if (!shouldUpdate) {
       return this.prisma.user.findFirst({ where: { id: userId } });
@@ -739,7 +739,7 @@ export class AuthService {
         profile: {
           ...currentProfile,
           email: nextEmail || currentProfile.email,
-          fullname: nextFullname || currentProfile.fullname,
+          fullname: nextFullname || currentProfile.full_name,
         } as any,
       },
     });
@@ -761,7 +761,7 @@ export class AuthService {
     const value = (profile ?? {}) as Partial<UserProfileData>;
     return {
       email: value.email ?? '',
-      fullname: value.fullname ?? '',
+      full_name: value.full_name ?? '',
       password: value.password ?? '',
       role: (value.role as Role) ?? Role.student,
       institution: value.institution ?? null,
@@ -775,7 +775,7 @@ export class AuthService {
   private buildRoleProfile(input: RoleProfileInput): UserProfileData {
     const profile: UserProfileData = {
       email: input.email.trim().toLowerCase(),
-      fullname: input.fullname.trim(),
+      full_name: input.full_name.trim(),
       password: input.password,
       role: input.role,
       institution: this.normalizeOptionalText(input.institution),

@@ -122,7 +122,11 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
+  full_name: 'full_name',
+  email: 'email',
+  password: 'password',
   profile: 'profile',
+  skills: 'skills',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -157,18 +161,6 @@ exports.Prisma.UserPasswordResetScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.PortfolioScalarFieldEnum = {
-  id: 'id',
-  fullName: 'fullName',
-  email: 'email',
-  bio: 'bio',
-  skills: 'skills',
-  portfolioLink: 'portfolioLink',
-  userId: 'userId',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -179,15 +171,15 @@ exports.Prisma.NullableJsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
 exports.Prisma.JsonNullValueFilter = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
-};
-
-exports.Prisma.QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive'
 };
 
 exports.Prisma.NullsOrder = {
@@ -203,8 +195,7 @@ exports.Prisma.ModelName = {
   User: 'User',
   AuthProvider: 'AuthProvider',
   UserOtp: 'UserOtp',
-  UserPasswordReset: 'UserPasswordReset',
-  Portfolio: 'Portfolio'
+  UserPasswordReset: 'UserPasswordReset'
 };
 
 /**

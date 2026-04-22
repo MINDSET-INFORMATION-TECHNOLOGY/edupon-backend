@@ -16,7 +16,8 @@ const class_validator_1 = require("class-validator");
 const normalized_string_transform_1 = require("../../common/transformers/normalized-string.transform");
 class RegisterCommonDto {
     email;
-    fullname;
+    full_name;
+    skills;
     password;
     area_of_interest;
 }
@@ -28,12 +29,19 @@ __decorate([
     __metadata("design:type", String)
 ], RegisterCommonDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ description: 'Maps to User.full_name' }),
     (0, normalized_string_transform_1.TrimString)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], RegisterCommonDto.prototype, "fullname", void 0);
+], RegisterCommonDto.prototype, "full_name", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: ['JavaScript', 'TypeScript'], description: 'Maps to User.skills (optional)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], RegisterCommonDto.prototype, "skills", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
@@ -41,7 +49,7 @@ __decorate([
     __metadata("design:type", String)
 ], RegisterCommonDto.prototype, "password", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Required for all roles.' }),
+    (0, swagger_1.ApiProperty)({ description: 'Required for all roles (stored in user.profile.area_of_interest).' }),
     (0, normalized_string_transform_1.TrimString)(),
     (0, class_validator_1.IsNotEmpty)({ message: 'area_of_interest is required' }),
     (0, class_validator_1.IsString)(),

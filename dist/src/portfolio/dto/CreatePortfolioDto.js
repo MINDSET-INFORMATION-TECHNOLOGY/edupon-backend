@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePortfolioDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreatePortfolioDto {
     fullName;
@@ -17,29 +18,41 @@ class CreatePortfolioDto {
     bio;
     skills;
     portfolioLink;
+    userId;
 }
 exports.CreatePortfolioDto = CreatePortfolioDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Maps to Portfolio.fullName' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreatePortfolioDto.prototype, "fullName", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Maps to Portfolio.email' }),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], CreatePortfolioDto.prototype, "email", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Maps to Portfolio.bio' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreatePortfolioDto.prototype, "bio", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Maps to Portfolio.skills' }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], CreatePortfolioDto.prototype, "skills", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Maps to Portfolio.portfolioLink' }),
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], CreatePortfolioDto.prototype, "portfolioLink", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Associated User ID (optional, inferred from auth)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreatePortfolioDto.prototype, "userId", void 0);
 //# sourceMappingURL=CreatePortfolioDto.js.map
