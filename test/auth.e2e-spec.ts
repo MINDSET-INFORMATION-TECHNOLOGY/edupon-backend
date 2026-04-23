@@ -114,7 +114,9 @@ describe('Auth registration (e2e)', () => {
 
     app = moduleRef.createNestApplication();
     // replicate same pipes as main.ts
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+    );
     app.setGlobalPrefix('api');
     await app.init();
   });
@@ -176,9 +178,7 @@ describe('Auth registration (e2e)', () => {
   });
 
   it('/api/me (GET) returns 401 without jwt', () => {
-    return request(app.getHttpServer())
-      .get('/api/me')
-      .expect(401);
+    return request(app.getHttpServer()).get('/api/me').expect(401);
   });
 
   it('/api/me (GET) returns user with valid jwt', () => {
@@ -194,9 +194,7 @@ describe('Auth registration (e2e)', () => {
   });
 
   it('/api/logout (POST) returns 401 without jwt', () => {
-    return request(app.getHttpServer())
-      .post('/api/logout')
-      .expect(401);
+    return request(app.getHttpServer()).post('/api/logout').expect(401);
   });
 
   it('/api/logout (POST) revokes session with valid jwt', () => {
@@ -288,8 +286,6 @@ describe('Auth registration (e2e)', () => {
   });
 
   it('/api/oauth/twitter (GET) rejects unsupported provider', () => {
-    return request(app.getHttpServer())
-      .get('/api/oauth/twitter')
-      .expect(400);
+    return request(app.getHttpServer()).get('/api/oauth/twitter').expect(400);
   });
 });

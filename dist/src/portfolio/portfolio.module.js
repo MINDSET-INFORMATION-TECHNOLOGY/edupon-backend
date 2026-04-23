@@ -17,7 +17,7 @@ exports.PortfolioModule = PortfolioModule;
 exports.PortfolioModule = PortfolioModule = __decorate([
     (0, common_1.Module)({
         controllers: [portfolio_controller_1.PortfolioController],
-        providers: [portfolio_service_1.PortfolioService, prisma_service_1.PrismaService]
+        providers: [portfolio_service_1.PortfolioService, prisma_service_1.PrismaService],
     })
 ], PortfolioModule);
 //# sourceMappingURL=portfolio.module.js.map

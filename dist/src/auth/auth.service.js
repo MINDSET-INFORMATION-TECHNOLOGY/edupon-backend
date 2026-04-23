@@ -172,7 +172,9 @@ let AuthService = class AuthService {
                 throw new common_1.NotFoundException('User not found');
             }
             const currentProfile = this.readUserProfile(existingUser.profile);
-            const normalizedNextEmail = (updateAuthDto.email ?? currentProfile.email).trim().toLowerCase();
+            const normalizedNextEmail = (updateAuthDto.email ?? currentProfile.email)
+                .trim()
+                .toLowerCase();
             if (normalizedNextEmail !== currentProfile.email) {
                 const duplicate = await this.findUserByEmail(normalizedNextEmail);
                 if (duplicate && duplicate.id !== id) {
@@ -454,7 +456,7 @@ let AuthService = class AuthService {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body,
         });
-        const tokenPayload = (await response.json().catch(() => ({})));
+        const tokenPayload = await response.json().catch(() => ({}));
         if (!response.ok || !tokenPayload.access_token) {
             let description = tokenPayload?.error_description;
             if (Array.isArray(description)) {
@@ -476,7 +478,7 @@ let AuthService = class AuthService {
             const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                 headers: { Authorization: `Bearer ${accessToken}` },
             });
-            const payload = (await response.json().catch(() => ({})));
+            const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.sub || !payload.email) {
                 throw new common_1.BadRequestException({
                     message: 'Failed to fetch Google user profile',
@@ -484,7 +486,10 @@ let AuthService = class AuthService {
                 });
             }
             const fullname = payload.name?.trim() ||
-                [payload.given_name, payload.family_name].filter(Boolean).join(' ').trim() ||
+                [payload.given_name, payload.family_name]
+                    .filter(Boolean)
+                    .join(' ')
+                    .trim() ||
                 payload.email;
             return {
                 providerUserId: payload.sub,
@@ -495,7 +500,7 @@ let AuthService = class AuthService {
         const response = await fetch('https://api.linkedin.com/v2/userinfo', {
             headers: { Authorization: `Bearer ${accessToken}` },
         });
-        const payload = (await response.json().catch(() => ({})));
+        const payload = await response.json().catch(() => ({}));
         if (!response.ok || !payload.sub || !payload.email) {
             throw new common_1.BadRequestException({
                 message: 'Failed to fetch LinkedIn user profile',
@@ -503,7 +508,10 @@ let AuthService = class AuthService {
             });
         }
         const fullname = payload.name?.trim() ||
-            [payload.given_name, payload.family_name].filter(Boolean).join(' ').trim() ||
+            [payload.given_name, payload.family_name]
+                .filter(Boolean)
+                .join(' ')
+                .trim() ||
             payload.email;
         return {
             providerUserId: payload.sub,
@@ -706,7 +714,9 @@ let AuthService = class AuthService {
         }, this.getJwtSecret(), { expiresIn: AuthService_1.ACCESS_TOKEN_TTL_SECONDS });
     }
     getJwtSecret() {
-        return process.env.JWT_ACCESS_SECRET ?? process.env.JWT_SECRET ?? 'dev-jwt-secret';
+        return (process.env.JWT_ACCESS_SECRET ??
+            process.env.JWT_SECRET ??
+            'dev-jwt-secret');
     }
     toPublicUser(user) {
         const profile = this.readUserProfile(user.profile);
@@ -721,9 +731,11 @@ let AuthService = class AuthService {
             return await callback();
         }
         catch (error) {
-            const message = error instanceof Error ? error.message : 'Unexpected error';
-            const stack = error instanceof Error ? error.stack : undefined;
-            this.logger.error(`${method} failed: ${message}`, stack);
+            if (!(error instanceof common_1.HttpException) || error.getStatus() >= 500) {
+                const message = error instanceof Error ? error.message : 'Unexpected error';
+                const stack = error instanceof Error ? error.stack : undefined;
+                this.logger.error(`${method} failed: ${message}`, stack);
+            }
             throw error;
         }
     }

@@ -80,7 +80,10 @@ __decorate([
     __metadata("design:type", String)
 ], CreateAuthDto.prototype, "full_name", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: ['JavaScript', 'TypeScript'], description: 'Maps to User.skills (optional)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        example: ['JavaScript', 'TypeScript'],
+        description: 'Maps to User.skills (optional)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
@@ -108,7 +111,9 @@ __decorate([
     }),
     (0, normalized_string_transform_1.OptionalTrimString)(),
     (0, class_validator_1.ValidateIf)((o) => o.role === enums_1.Role.student || o.role === enums_1.Role.educator),
-    (0, class_validator_1.IsNotEmpty)({ message: 'institution is required for student or educator role' }),
+    (0, class_validator_1.IsNotEmpty)({
+        message: 'institution is required for student or educator role',
+    }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateAuthDto.prototype, "institution", void 0);

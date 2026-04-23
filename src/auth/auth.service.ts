@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, Logger, NotFoundException, HttpException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  Logger,
+  NotFoundException,
+  HttpException,
+} from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -100,17 +106,21 @@ export class AuthService {
   async create(createAuthDto: CreateAuthDto): Promise<PublicUser> {
     return this.withErrorLogging('create', async () => {
       const normalizedEmail = createAuthDto.email.trim().toLowerCase();
-      this.logger.log(`Creating account for ${normalizedEmail} with role ${createAuthDto.role}`);
+      this.logger.log(
+        `Creating account for ${normalizedEmail} with role ${createAuthDto.role}`,
+      );
       const existingUser = await this.findUserByEmail(normalizedEmail);
       if (existingUser) {
-        this.logger.warn(`Registration blocked because email is already in use: ${normalizedEmail}`);
+        this.logger.warn(
+          `Registration blocked because email is already in use: ${normalizedEmail}`,
+        );
         throw new BadRequestException('Email already in use');
       }
 
       const hashed = await bcrypt.hash(createAuthDto.password, 10);
       const profile = this.buildRoleProfile({
         email: normalizedEmail,
-full_name: createAuthDto.full_name,
+        full_name: createAuthDto.full_name,
         password: hashed,
         role: createAuthDto.role,
         institution: createAuthDto.institution,
@@ -124,7 +134,9 @@ full_name: createAuthDto.full_name,
         data: { profile: profile as any },
       });
 
-      this.logger.log(`Created account for user ${user.id} (${normalizedEmail})`);
+      this.logger.log(
+        `Created account for user ${user.id} (${normalizedEmail})`,
+      );
       return this.toPublicUser(user);
     });
   }
@@ -132,7 +144,9 @@ full_name: createAuthDto.full_name,
   async login(dto: LoginDto): Promise<LoginResponse> {
     return this.withErrorLogging('login', async () => {
       if (!dto.email || !dto.password) {
-        this.logger.warn('Login rejected because email or password was missing');
+        this.logger.warn(
+          'Login rejected because email or password was missing',
+        );
         throw new BadRequestException('Invalid email or password');
       }
 
@@ -146,14 +160,21 @@ full_name: createAuthDto.full_name,
       }
 
       const profile = this.readUserProfile(user.profile);
-      const isValidPassword = await bcrypt.compare(dto.password, profile.password);
+      const isValidPassword = await bcrypt.compare(
+        dto.password,
+        profile.password,
+      );
       if (!isValidPassword) {
-        this.logger.warn(`Login failed due to invalid password for user ${user.id}`);
+        this.logger.warn(
+          `Login failed due to invalid password for user ${user.id}`,
+        );
         throw new BadRequestException('Invalid email or password');
       }
 
       const session = await this.issueAuthSession(user);
-      this.logger.log(`Login succeeded for user ${user.id} with role ${session.user.role}`);
+      this.logger.log(
+        `Login succeeded for user ${user.id} with role ${session.user.role}`,
+      );
       return {
         role: session.user.role,
         token: session.tokens.access_token,
@@ -187,7 +208,9 @@ full_name: createAuthDto.full_name,
           });
         });
       }
-      this.logger.log(`Logout completed${revokedToken ? ' with token revocation' : ''}`);
+      this.logger.log(
+        `Logout completed${revokedToken ? ' with token revocation' : ''}`,
+      );
       return { message: 'User logged out successfully' };
     });
   }
@@ -221,7 +244,9 @@ full_name: createAuthDto.full_name,
       }
 
       const currentProfile = this.readUserProfile(existingUser.profile);
-      const normalizedNextEmail = (updateAuthDto.email ?? currentProfile.email).trim().toLowerCase();
+      const normalizedNextEmail = (updateAuthDto.email ?? currentProfile.email)
+        .trim()
+        .toLowerCase();
 
       if (normalizedNextEmail !== currentProfile.email) {
         const duplicate = await this.findUserByEmail(normalizedNextEmail);
@@ -237,17 +262,29 @@ full_name: createAuthDto.full_name,
 
       const nextProfile = this.buildRoleProfile({
         email: normalizedNextEmail,
-full_name: updateAuthDto.full_name ?? currentProfile.full_name,
+        full_name: updateAuthDto.full_name ?? currentProfile.full_name,
         password: nextPassword,
         role: updateAuthDto.role ?? currentProfile.role,
-        institution: this.resolveOptionalProfileField(updateAuthDto, 'institution', currentProfile.institution),
-        industry: this.resolveOptionalProfileField(updateAuthDto, 'industry', currentProfile.industry),
+        institution: this.resolveOptionalProfileField(
+          updateAuthDto,
+          'institution',
+          currentProfile.institution,
+        ),
+        industry: this.resolveOptionalProfileField(
+          updateAuthDto,
+          'industry',
+          currentProfile.industry,
+        ),
         area_of_interest: this.resolveOptionalProfileField(
           updateAuthDto,
           'area_of_interest',
           currentProfile.area_of_interest,
         ),
-        company_email: this.resolveOptionalProfileField(updateAuthDto, 'company_email', currentProfile.company_email),
+        company_email: this.resolveOptionalProfileField(
+          updateAuthDto,
+          'company_email',
+          currentProfile.company_email,
+        ),
         is_verified: currentProfile.is_verified,
       });
 
@@ -270,19 +307,25 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     });
   }
 
-  async requestOtp(dto: RequestOtpDto): Promise<{ message: string; expires_at: string }> {
+  async requestOtp(
+    dto: RequestOtpDto,
+  ): Promise<{ message: string; expires_at: string }> {
     return this.withErrorLogging('requestOtp', async () => {
       const email = dto.email.trim().toLowerCase();
       this.logger.log(`OTP request received for ${email}`);
       const user = await this.findUserByEmail(email);
       if (!user) {
-        this.logger.warn(`OTP request failed because user was not found: ${email}`);
+        this.logger.warn(
+          `OTP request failed because user was not found: ${email}`,
+        );
         throw new NotFoundException('User not found');
       }
 
       const currentProfile = this.readUserProfile(user.profile);
       if (currentProfile.is_verified) {
-        this.logger.warn(`OTP request skipped because user ${user.id} is already verified`);
+        this.logger.warn(
+          `OTP request skipped because user ${user.id} is already verified`,
+        );
         throw new BadRequestException('User is already verified');
       }
 
@@ -311,7 +354,9 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
         fullname: currentProfile.full_name,
       });
 
-      this.logger.log(`OTP issued for user ${user.id}; expires at ${expiresAt.toISOString()}`);
+      this.logger.log(
+        `OTP issued for user ${user.id}; expires at ${expiresAt.toISOString()}`,
+      );
       return {
         message: 'OTP generated and sent successfully',
         expires_at: expiresAt.toISOString(),
@@ -324,10 +369,13 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
       const email = dto.email.trim().toLowerCase();
       this.logger.log(`Password reset requested for ${email}`);
       const user = await this.findUserByEmail(email);
-      const safeMessage = 'If an account exists with this email, a reset code has been sent';
+      const safeMessage =
+        'If an account exists with this email, a reset code has been sent';
 
       if (!user) {
-        this.logger.warn(`Password reset requested for unknown email: ${email}`);
+        this.logger.warn(
+          `Password reset requested for unknown email: ${email}`,
+        );
         return { message: safeMessage };
       }
 
@@ -357,7 +405,9 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
         fullname: currentProfile.full_name,
       });
 
-      this.logger.log(`Password reset OTP issued for user ${user.id}; expires at ${expiresAt.toISOString()}`);
+      this.logger.log(
+        `Password reset OTP issued for user ${user.id}; expires at ${expiresAt.toISOString()}`,
+      );
       return { message: safeMessage };
     });
   }
@@ -368,7 +418,9 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
       this.logger.log(`Password reset attempt for ${email}`);
       const user = await this.findUserByEmail(email);
       if (!user) {
-        this.logger.warn(`Password reset failed because user was not found: ${email}`);
+        this.logger.warn(
+          `Password reset failed because user was not found: ${email}`,
+        );
         throw new BadRequestException('Invalid or expired reset code');
       }
 
@@ -434,19 +486,25 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
       }
 
       if (matchingRecords.length > 1) {
-        throw new BadRequestException('OTP is ambiguous. Please request a new OTP and try again');
+        throw new BadRequestException(
+          'OTP is ambiguous. Please request a new OTP and try again',
+        );
       }
 
       const otpRecord = matchingRecords[0];
       this.logger.log(`OTP matched for user ${otpRecord.userId}`);
 
       if (otpRecord.verifiedAt) {
-        this.logger.warn(`OTP verification rejected because OTP for user ${otpRecord.userId} was already used`);
+        this.logger.warn(
+          `OTP verification rejected because OTP for user ${otpRecord.userId} was already used`,
+        );
         throw new BadRequestException('OTP has already been used');
       }
 
       if (Date.now() > otpRecord.expiresAt.getTime()) {
-        this.logger.warn(`OTP verification rejected because OTP for user ${otpRecord.userId} expired`);
+        this.logger.warn(
+          `OTP verification rejected because OTP for user ${otpRecord.userId} expired`,
+        );
         throw new BadRequestException('OTP has expired');
       }
 
@@ -472,7 +530,9 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
         }),
       ]);
 
-      this.logger.log(`OTP verification succeeded for user ${otpRecord.userId}`);
+      this.logger.log(
+        `OTP verification succeeded for user ${otpRecord.userId}`,
+      );
       return { message: 'OTP verified successfully' };
     });
   }
@@ -484,7 +544,10 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     return this.withErrorLogging('signInWithProviderCallback', async () => {
       this.logger.log(`OAuth callback received for provider ${provider}`);
       const tokens = await this.exchangeCodeForToken(provider, dto.code);
-      const profile = await this.fetchProviderProfile(provider, tokens.accessToken);
+      const profile = await this.fetchProviderProfile(
+        provider,
+        tokens.accessToken,
+      );
 
       const payload: SocialSignInPayload = {
         providerUserId: profile.providerUserId,
@@ -495,7 +558,9 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
 
       const user = await this.upsertSocialProvider(provider, payload);
       if (user) {
-        this.logger.log(`OAuth sign-in succeeded for provider ${provider} and user ${user.id}`);
+        this.logger.log(
+          `OAuth sign-in succeeded for provider ${provider} and user ${user.id}`,
+        );
       }
       return user ? this.issueAuthSession(user) : null;
     });
@@ -537,14 +602,22 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     });
   }
 
-  private validateProviderConfig(provider: AuthProviderType, config: OAuthProviderConfig): OAuthProviderConfig {
+  private validateProviderConfig(
+    provider: AuthProviderType,
+    config: OAuthProviderConfig,
+  ): OAuthProviderConfig {
     if (!config.clientId || !config.clientSecret || !config.callbackUrl) {
-      throw new BadRequestException(`Missing OAuth configuration for provider: ${provider}`);
+      throw new BadRequestException(
+        `Missing OAuth configuration for provider: ${provider}`,
+      );
     }
     return config;
   }
 
-  private async exchangeCodeForToken(provider: AuthProviderType, code: string): Promise<OAuthTokenPayload> {
+  private async exchangeCodeForToken(
+    provider: AuthProviderType,
+    code: string,
+  ): Promise<OAuthTokenPayload> {
     const config = this.getProviderConfig(provider);
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
@@ -559,7 +632,7 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
     });
-    const tokenPayload = (await response.json().catch(() => ({}))) as any;
+    const tokenPayload = await response.json().catch(() => ({}));
 
     if (!response.ok || !tokenPayload.access_token) {
       // ensure error_description is a string; Google sometimes returns an
@@ -584,12 +657,18 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     };
   }
 
-  private async fetchProviderProfile(provider: AuthProviderType, accessToken: string): Promise<OAuthProfile> {
+  private async fetchProviderProfile(
+    provider: AuthProviderType,
+    accessToken: string,
+  ): Promise<OAuthProfile> {
     if (provider === AuthProviderType.GOOGLE) {
-      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const payload = (await response.json().catch(() => ({}))) as any;
+      const response = await fetch(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+      const payload = await response.json().catch(() => ({}));
 
       if (!response.ok || !payload.sub || !payload.email) {
         throw new BadRequestException({
@@ -600,20 +679,23 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
 
       const fullname =
         payload.name?.trim() ||
-        [payload.given_name, payload.family_name].filter(Boolean).join(' ').trim() ||
+        [payload.given_name, payload.family_name]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
         payload.email;
 
-    return {
-      providerUserId: payload.sub,
-      email: payload.email,
-      full_name: fullname,
-    };
+      return {
+        providerUserId: payload.sub,
+        email: payload.email,
+        full_name: fullname,
+      };
     }
 
     const response = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    const payload = (await response.json().catch(() => ({}))) as any;
+    const payload = await response.json().catch(() => ({}));
 
     if (!response.ok || !payload.sub || !payload.email) {
       throw new BadRequestException({
@@ -624,7 +706,10 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
 
     const fullname =
       payload.name?.trim() ||
-      [payload.given_name, payload.family_name].filter(Boolean).join(' ').trim() ||
+      [payload.given_name, payload.family_name]
+        .filter(Boolean)
+        .join(' ')
+        .trim() ||
       payload.email;
 
     return {
@@ -641,7 +726,11 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
 
     if (existingUser) {
       const existingProfile = this.readUserProfile(existingUser.profile);
-      return this.syncSocialProfileFields(existingUser.id, existingProfile, dto);
+      return this.syncSocialProfileFields(
+        existingUser.id,
+        existingProfile,
+        dto,
+      );
     }
 
     const profile = this.buildRoleProfile({
@@ -678,8 +767,14 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     });
 
     if (existingProvider) {
-      const existingProfile = this.readUserProfile(existingProvider.user.profile);
-      return this.syncSocialProfileFields(existingProvider.user.id, existingProfile, dto);
+      const existingProfile = this.readUserProfile(
+        existingProvider.user.profile,
+      );
+      return this.syncSocialProfileFields(
+        existingProvider.user.id,
+        existingProfile,
+        dto,
+      );
     }
 
     const user = await this.findOrCreateSocialUser(dto);
@@ -792,24 +887,32 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     switch (profile.role) {
       case Role.student:
         if (!profile.institution) {
-          throw new BadRequestException('institution is required for student role');
+          throw new BadRequestException(
+            'institution is required for student role',
+          );
         }
         profile.industry = null;
         profile.company_email = null;
         return profile;
       case Role.educator:
         if (!profile.institution) {
-          throw new BadRequestException('institution is required for educator role');
+          throw new BadRequestException(
+            'institution is required for educator role',
+          );
         }
         profile.industry = null;
         profile.company_email = null;
         return profile;
       case Role.company:
         if (!profile.industry) {
-          throw new BadRequestException('industry is required for company role');
+          throw new BadRequestException(
+            'industry is required for company role',
+          );
         }
         if (!profile.company_email) {
-          throw new BadRequestException('company_email is required for company role');
+          throw new BadRequestException(
+            'company_email is required for company role',
+          );
         }
         profile.institution = null;
         return profile;
@@ -847,7 +950,10 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     return randomInt(0, 1_000_000).toString().padStart(6, '0');
   }
 
-  private async issueAuthSession(user: { id: number; profile: unknown }): Promise<AuthSessionResponse> {
+  private async issueAuthSession(user: {
+    id: number;
+    profile: unknown;
+  }): Promise<AuthSessionResponse> {
     const accessToken = this.generateAccessToken(user);
 
     return {
@@ -874,11 +980,16 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
   }
 
   private getJwtSecret(): string {
-    return process.env.JWT_ACCESS_SECRET ?? process.env.JWT_SECRET ?? 'dev-jwt-secret';
+    return (
+      process.env.JWT_ACCESS_SECRET ??
+      process.env.JWT_SECRET ??
+      'dev-jwt-secret'
+    );
   }
 
   private toPublicUser(user: { id: number; profile: unknown }): PublicUser {
     const profile = this.readUserProfile(user.profile);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _password, ...publicProfile } = profile;
     return {
       id: user.id,
@@ -886,12 +997,16 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     };
   }
 
-  private async withErrorLogging<T>(method: string, callback: () => Promise<T>): Promise<T> {
+  private async withErrorLogging<T>(
+    method: string,
+    callback: () => Promise<T>,
+  ): Promise<T> {
     try {
       return await callback();
     } catch (error) {
       if (!(error instanceof HttpException) || error.getStatus() >= 500) {
-        const message = error instanceof Error ? error.message : 'Unexpected error';
+        const message =
+          error instanceof Error ? error.message : 'Unexpected error';
         const stack = error instanceof Error ? error.stack : undefined;
         this.logger.error(`${method} failed: ${message}`, stack);
       }

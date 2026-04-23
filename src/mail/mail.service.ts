@@ -23,7 +23,8 @@ export class MailService {
   async sendOtpVerificationEmail(input: SendOtpMailInput): Promise<void> {
     const from = this.getRequiredEnv('MAIL_FROM');
     const appName = process.env.MAIL_APP_NAME?.trim() || 'Edupon';
-    const subject = process.env.MAIL_OTP_SUBJECT?.trim() || `${appName} OTP Verification`;
+    const subject =
+      process.env.MAIL_OTP_SUBJECT?.trim() || `${appName} OTP Verification`;
     const greetingName = input.fullname?.trim() || 'there';
     const expiryTime = input.expiresAt.toISOString();
 
@@ -54,10 +55,14 @@ export class MailService {
     });
   }
 
-  async sendPasswordResetEmail(input: SendPasswordResetMailInput): Promise<void> {
+  async sendPasswordResetEmail(
+    input: SendPasswordResetMailInput,
+  ): Promise<void> {
     const from = this.getRequiredEnv('MAIL_FROM');
     const appName = process.env.MAIL_APP_NAME?.trim() || 'Edupon';
-    const subject = process.env.MAIL_PASSWORD_RESET_SUBJECT?.trim() || `${appName} Password Reset`;
+    const subject =
+      process.env.MAIL_PASSWORD_RESET_SUBJECT?.trim() ||
+      `${appName} Password Reset`;
     const greetingName = input.fullname?.trim() || 'there';
     const expiryTime = input.expiresAt.toISOString();
 
@@ -183,7 +188,9 @@ export class MailService {
   private getRequiredEnv(key: string): string {
     const value = process.env[key]?.trim();
     if (!value) {
-      throw new InternalServerErrorException(`Missing required mail configuration: ${key}`);
+      throw new InternalServerErrorException(
+        `Missing required mail configuration: ${key}`,
+      );
     }
     return value;
   }
@@ -192,7 +199,9 @@ export class MailService {
     const value = this.getRequiredEnv(key);
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) {
-      throw new InternalServerErrorException(`Invalid number for mail configuration: ${key}`);
+      throw new InternalServerErrorException(
+        `Invalid number for mail configuration: ${key}`,
+      );
     }
     return parsed;
   }

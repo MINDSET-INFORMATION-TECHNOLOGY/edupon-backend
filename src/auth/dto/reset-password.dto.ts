@@ -1,6 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
-import { TrimString, TrimToLowerCase } from '../../common/transformers/normalized-string.transform';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
+import {
+  TrimString,
+  TrimToLowerCase,
+} from '../../common/transformers/normalized-string.transform';
 
 export class ResetPasswordDto {
   @ApiProperty({ example: 'alice@example.com' })

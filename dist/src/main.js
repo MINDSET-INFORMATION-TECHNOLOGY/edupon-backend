@@ -17,7 +17,9 @@ async function bootstrap() {
     }));
     app.setGlobalPrefix('api');
     if (local_upload_config_1.isLocalUploadDriver) {
-        app.useStaticAssets(local_upload_config_1.LOCAL_UPLOAD_ROOT, { prefix: `${local_upload_config_1.UPLOAD_PUBLIC_PREFIX}/` });
+        app.useStaticAssets(local_upload_config_1.LOCAL_UPLOAD_ROOT, {
+            prefix: `${local_upload_config_1.UPLOAD_PUBLIC_PREFIX}/`,
+        });
     }
     const swaggerConfig = new swagger_1.DocumentBuilder()
         .setTitle('Edupon API')

@@ -5,36 +5,36 @@ export declare class PortfolioService {
     private prisma;
     constructor(prisma: PrismaService);
     create(userId: number, dto: CreatePortfolioDto): Promise<{
-        email: string;
-        skills: string[];
+        id: number;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
         userId: number;
         fullName: string;
+        email: string;
         bio: string;
+        skills: string[];
         portfolioLink: string;
     }>;
     findOne(id: number): Promise<{
-        email: string;
-        skills: string[];
+        id: number;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
         userId: number;
         fullName: string;
+        email: string;
         bio: string;
+        skills: string[];
         portfolioLink: string;
     }>;
     update(userId: number, id: number, dto: UpdatePortfolioDto): Promise<{
-        email: string;
-        skills: string[];
+        id: number;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
         userId: number;
         fullName: string;
+        email: string;
         bio: string;
+        skills: string[];
         portfolioLink: string;
     }>;
 }

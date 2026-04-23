@@ -5,6 +5,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
   controllers: [PortfolioController],
-  providers: [PortfolioService,PrismaService]
+  providers: [PortfolioService, PrismaService],
 })
 export class PortfolioModule {}

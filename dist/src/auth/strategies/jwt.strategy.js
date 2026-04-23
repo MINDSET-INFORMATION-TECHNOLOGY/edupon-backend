@@ -20,7 +20,9 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: process.env.JWT_ACCESS_SECRET ?? process.env.JWT_SECRET ?? 'dev-jwt-secret',
+            secretOrKey: process.env.JWT_ACCESS_SECRET ??
+                process.env.JWT_SECRET ??
+                'dev-jwt-secret',
             passReqToCallback: true,
         });
         this.tokenRevocationService = tokenRevocationService;

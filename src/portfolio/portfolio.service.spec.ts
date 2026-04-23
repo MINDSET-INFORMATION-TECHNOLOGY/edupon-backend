@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PortfolioService } from './portfolio.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -48,16 +52,23 @@ describe('PortfolioService', () => {
       mockPrisma.portfolio.create.mockResolvedValue(created);
 
       await expect(service.create(10, dto)).resolves.toEqual(created);
-      expect(mockPrisma.portfolio.findUnique).toHaveBeenCalledWith({ where: { userId: 10 } });
+      expect(mockPrisma.portfolio.findUnique).toHaveBeenCalledWith({
+        where: { userId: 10 },
+      });
       expect(mockPrisma.portfolio.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ userId: 10, email: 'jane@example.com' }),
+        data: expect.objectContaining({
+          userId: 10,
+          email: 'jane@example.com',
+        }),
       });
     });
 
     it('throws ConflictException when portfolio already exists', async () => {
       mockPrisma.portfolio.findUnique.mockResolvedValue({ id: 1, userId: 10 });
 
-      await expect(service.create(10, {} as any)).rejects.toBeInstanceOf(ConflictException);
+      await expect(service.create(10, {} as any)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
       expect(mockPrisma.portfolio.create).not.toHaveBeenCalled();
     });
   });
@@ -73,7 +84,9 @@ describe('PortfolioService', () => {
     it('throws NotFoundException when not found', async () => {
       mockPrisma.portfolio.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(99)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.findOne(99)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 
@@ -84,19 +97,25 @@ describe('PortfolioService', () => {
       mockPrisma.portfolio.findUnique.mockResolvedValue(portfolio);
       mockPrisma.portfolio.update.mockResolvedValue(updated);
 
-      await expect(service.update(10, 5, { bio: 'Updated' } as any)).resolves.toEqual(updated);
+      await expect(
+        service.update(10, 5, { bio: 'Updated' } as any),
+      ).resolves.toEqual(updated);
     });
 
     it('throws NotFoundException when portfolio does not exist', async () => {
       mockPrisma.portfolio.findUnique.mockResolvedValue(null);
 
-      await expect(service.update(10, 99, {} as any)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.update(10, 99, {} as any)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('throws ForbiddenException when user is not the owner', async () => {
       mockPrisma.portfolio.findUnique.mockResolvedValue({ id: 5, userId: 99 });
 
-      await expect(service.update(10, 5, {} as any)).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(service.update(10, 5, {} as any)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
     });
   });
 });

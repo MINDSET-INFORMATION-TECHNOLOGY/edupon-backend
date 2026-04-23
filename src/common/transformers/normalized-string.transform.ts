@@ -1,6 +1,9 @@
 import { Transform } from 'class-transformer';
 
-function normalizeString(value: unknown, options?: { lowercase?: boolean; emptyAsUndefined?: boolean }) {
+function normalizeString(
+  value: unknown,
+  options?: { lowercase?: boolean; emptyAsUndefined?: boolean },
+) {
   if (typeof value !== 'string') {
     return value;
   }
@@ -22,9 +25,13 @@ export function TrimToLowerCase() {
 }
 
 export function OptionalTrimString() {
-  return Transform(({ value }) => normalizeString(value, { emptyAsUndefined: true }));
+  return Transform(({ value }) =>
+    normalizeString(value, { emptyAsUndefined: true }),
+  );
 }
 
 export function OptionalTrimToLowerCase() {
-  return Transform(({ value }) => normalizeString(value, { lowercase: true, emptyAsUndefined: true }));
+  return Transform(({ value }) =>
+    normalizeString(value, { lowercase: true, emptyAsUndefined: true }),
+  );
 }

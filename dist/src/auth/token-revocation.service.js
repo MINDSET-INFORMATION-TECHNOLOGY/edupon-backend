@@ -11,7 +11,9 @@ const common_1 = require("@nestjs/common");
 let TokenRevocationService = class TokenRevocationService {
     revokedTokens = new Map();
     revokeToken(token, expiresAtMs) {
-        const ttl = expiresAtMs && Number.isFinite(expiresAtMs) ? expiresAtMs : Date.now() + 15 * 60 * 1000;
+        const ttl = expiresAtMs && Number.isFinite(expiresAtMs)
+            ? expiresAtMs
+            : Date.now() + 15 * 60 * 1000;
         this.revokedTokens.set(token, ttl);
     }
     isTokenRevoked(token) {

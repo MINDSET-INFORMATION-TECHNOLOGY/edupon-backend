@@ -24,7 +24,15 @@ jest.mock('bcrypt', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
 }));
-import { beforeAll, beforeEach, afterEach, describe, it, expect, jest } from '@jest/globals';
+import {
+  beforeAll,
+  beforeEach,
+  afterEach,
+  describe,
+  it,
+  expect,
+  jest,
+} from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
@@ -35,10 +43,17 @@ import * as jwt from 'jsonwebtoken';
 import { TokenRevocationService } from './token-revocation.service';
 
 const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
-type BcryptHashFn = (value: string | Buffer, saltOrRounds: string | number) => Promise<string>;
-type BcryptCompareFn = (value: string | Buffer, encrypted: string) => Promise<boolean>;
+type BcryptHashFn = (
+  value: string | Buffer,
+  saltOrRounds: string | number,
+) => Promise<string>;
+type BcryptCompareFn = (
+  value: string | Buffer,
+  encrypted: string,
+) => Promise<boolean>;
 const mockBcryptHash = bcrypt.hash as jest.MockedFunction<BcryptHashFn>;
-const mockBcryptCompare = bcrypt.compare as jest.MockedFunction<BcryptCompareFn>;
+const mockBcryptCompare =
+  bcrypt.compare as jest.MockedFunction<BcryptCompareFn>;
 
 // minimal mimic of the PrismaClient interface used by our service
 const mockPrisma = {
@@ -85,10 +100,12 @@ describe('AuthService', () => {
     (global as any).fetch = mockFetch;
     process.env.GOOGLE_CLIENT_ID = 'google-client-id';
     process.env.GOOGLE_CLIENT_SECRET = 'google-client-secret';
-    process.env.GOOGLE_CALLBACK_URL = 'http://localhost:3000/api/auth/signin/google/callback';
+    process.env.GOOGLE_CALLBACK_URL =
+      'http://localhost:3000/api/auth/signin/google/callback';
     process.env.LINKEDIN_CLIENT_ID = 'linkedin-client-id';
     process.env.LINKEDIN_CLIENT_SECRET = 'linkedin-client-secret';
-    process.env.LINKEDIN_CALLBACK_URL = 'http://localhost:3000/api/auth/signin/linkedin/callback';
+    process.env.LINKEDIN_CALLBACK_URL =
+      'http://localhost:3000/api/auth/signin/linkedin/callback';
   });
 
   beforeEach(async () => {
@@ -97,7 +114,10 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
-        { provide: TokenRevocationService, useValue: mockTokenRevocationService },
+        {
+          provide: TokenRevocationService,
+          useValue: mockTokenRevocationService,
+        },
       ],
     }).compile();
 
@@ -157,10 +177,20 @@ describe('AuthService', () => {
     });
 
     it('throws BadRequestException on duplicate email', async () => {
-      const dto = { email: 'a@b.com', full_name: '', password: 'p', role: Role.student, area_of_interest: 'None', institution: 'Any' } as any;
+      const dto = {
+        email: 'a@b.com',
+        full_name: '',
+        password: 'p',
+        role: Role.student,
+        area_of_interest: 'None',
+        institution: 'Any',
+      } as any;
       // simulate email already exists by returning a record from
       // findFirst; create shouldn’t even be called.
-      mockPrisma.user.findFirst.mockResolvedValue({ id: 'existing', profile: { email: 'a@b.com' } });
+      mockPrisma.user.findFirst.mockResolvedValue({
+        id: 'existing',
+        profile: { email: 'a@b.com' },
+      });
 
       await expect(service.create(dto)).rejects.toThrow('Email already in use');
 
@@ -184,8 +214,8 @@ describe('AuthService', () => {
           area_of_interest: 'Testing',
           institution: 'Test University',
           is_verified: true,
-  },
-} as any;
+        },
+      } as any;
 
       mockPrisma.user.findFirst.mockResolvedValue(user);
       mockBcryptCompare.mockResolvedValue(true);
@@ -200,7 +230,10 @@ describe('AuthService', () => {
           },
         },
       });
-      expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashed-password');
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        'password123',
+        'hashed-password',
+      );
       expect(result).toMatchObject({
         role: Role.student,
       });
@@ -234,12 +267,18 @@ describe('AuthService', () => {
       mockPrisma.user.findFirst.mockResolvedValue(existingUser);
       mockBcryptCompare.mockResolvedValue(false);
 
-      await expect(service.login(dto)).rejects.toThrow('Invalid email or password');
+      await expect(service.login(dto)).rejects.toThrow(
+        'Invalid email or password',
+      );
     });
 
     it('throws BadRequestException when email or password is missing', async () => {
-      await expect(service.login({ email: 'x@example.com' } as any)).rejects.toThrow('Invalid email or password');
-      await expect(service.login({ password: 'secret' } as any)).rejects.toThrow('Invalid email or password');
+      await expect(
+        service.login({ email: 'x@example.com' } as any),
+      ).rejects.toThrow('Invalid email or password');
+      await expect(
+        service.login({ password: 'secret' } as any),
+      ).rejects.toThrow('Invalid email or password');
     });
   });
 
@@ -253,7 +292,10 @@ describe('AuthService', () => {
 
       const result = await service.logout(req);
 
-      expect(mockTokenRevocationService.revokeToken).toHaveBeenCalledWith('test-token', undefined);
+      expect(mockTokenRevocationService.revokeToken).toHaveBeenCalledWith(
+        'test-token',
+        undefined,
+      );
       expect(destroy).toHaveBeenCalled();
       expect(result).toEqual({ message: 'User logged out successfully' });
     });
@@ -269,8 +311,11 @@ describe('AuthService', () => {
     it('forgotPassword returns a safe message when user does not exist', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(null);
 
-      await expect(service.forgotPassword({ email: 'missing@example.com' } as any)).resolves.toEqual({
-        message: 'If an account exists with this email, a reset code has been sent',
+      await expect(
+        service.forgotPassword({ email: 'missing@example.com' } as any),
+      ).resolves.toEqual({
+        message:
+          'If an account exists with this email, a reset code has been sent',
       });
 
       expect(mockPrisma.userPasswordReset.upsert).not.toHaveBeenCalled();
@@ -437,7 +482,10 @@ describe('AuthService', () => {
       mockPrisma.authProvider.create.mockResolvedValue({});
       mockBcryptHash.mockResolvedValue('hashed');
 
-      const result = await service.signInWithProviderCallback(AuthProviderType.LINKEDIN, dto);
+      const result = await service.signInWithProviderCallback(
+        AuthProviderType.LINKEDIN,
+        dto,
+      );
 
       expect(mockPrisma.user.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -464,7 +512,10 @@ describe('AuthService', () => {
         },
       });
       expect(typeof result?.tokens.access_token).toBe('string');
-      const payload = jwt.verify(result?.tokens.access_token ?? '', 'dev-jwt-secret') as any;
+      const payload = jwt.verify(
+        result?.tokens.access_token ?? '',
+        'dev-jwt-secret',
+      ) as any;
       expect(payload).toMatchObject({
         sub: 3,
         email: 'callback@user.com',

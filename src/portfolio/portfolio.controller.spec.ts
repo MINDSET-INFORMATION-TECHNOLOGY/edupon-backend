@@ -34,10 +34,16 @@ describe('PortfolioController', () => {
 
   describe('create', () => {
     it('calls service.create with userId and dto', async () => {
-      const dto = { fullName: 'Jane', email: 'j@j.com', bio: '', skills: [], portfolioLink: '' } as any;
+      const dto = {
+        fullName: 'Jane',
+        email: 'j@j.com',
+        bio: '',
+        skills: [],
+        portfolioLink: '',
+      } as any;
       const req = { user: { userId: 7 } };
       const result = { id: 1, userId: 7, ...dto };
-      jest.spyOn(service, 'create').mockResolvedValue(result as any);
+      jest.spyOn(service, 'create').mockResolvedValue(result);
 
       await expect(controller.create(dto, req)).resolves.toEqual(result);
       expect(service.create).toHaveBeenCalledWith(7, dto);

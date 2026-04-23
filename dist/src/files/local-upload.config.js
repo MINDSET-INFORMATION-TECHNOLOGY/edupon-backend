@@ -26,7 +26,14 @@ const MIME_EXTENSION_MAP = {
     'text/csv': '.csv',
     'text/plain': '.txt',
 };
-const DEFAULT_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+const DEFAULT_IMAGE_EXTENSIONS = [
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.webp',
+    '.gif',
+    '.svg',
+];
 const DEFAULT_FILE_EXTENSIONS = [
     '.pdf',
     '.doc',
@@ -46,7 +53,9 @@ const DEFAULT_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
 const DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 exports.LOCAL_UPLOAD_ROOT = process.env.LOCAL_UPLOAD_DIR ?? (0, path_1.join)(process.cwd(), 'public');
 exports.UPLOAD_PUBLIC_PREFIX = '/public';
-const configuredDriver = (process.env.UPLOAD_STORAGE_DRIVER ?? 'local').trim().toLowerCase();
+const configuredDriver = (process.env.UPLOAD_STORAGE_DRIVER ?? 'local')
+    .trim()
+    .toLowerCase();
 exports.UPLOAD_STORAGE_DRIVER = configuredDriver === 's3' ? 's3' : 'local';
 exports.isLocalUploadDriver = exports.UPLOAD_STORAGE_DRIVER === 'local';
 const imageExtensions = parseExtensionList(process.env.UPLOAD_IMAGE_EXTENSIONS, DEFAULT_IMAGE_EXTENSIONS);
@@ -137,11 +146,15 @@ function resolveFolder(kind) {
     return kind === 'image' ? IMAGE_FOLDER : FILE_FOLDER;
 }
 function resolveLocalFolder(destination, mimetype) {
-    const normalizedDestination = (destination ?? '').replace(/\\/g, '/').toLowerCase();
-    if (normalizedDestination.endsWith(`/${IMAGE_FOLDER}`) || normalizedDestination.endsWith(IMAGE_FOLDER)) {
+    const normalizedDestination = (destination ?? '')
+        .replace(/\\/g, '/')
+        .toLowerCase();
+    if (normalizedDestination.endsWith(`/${IMAGE_FOLDER}`) ||
+        normalizedDestination.endsWith(IMAGE_FOLDER)) {
         return IMAGE_FOLDER;
     }
-    if (normalizedDestination.endsWith(`/${FILE_FOLDER}`) || normalizedDestination.endsWith(FILE_FOLDER)) {
+    if (normalizedDestination.endsWith(`/${FILE_FOLDER}`) ||
+        normalizedDestination.endsWith(FILE_FOLDER)) {
         return FILE_FOLDER;
     }
     if ((mimetype ?? '').toLowerCase().startsWith('image/')) {
@@ -225,7 +238,9 @@ function createS3Storage(kind) {
     const region = (process.env.S3_REGION ?? DEFAULT_S3_REGION).trim();
     const endpoint = (process.env.S3_ENDPOINT ?? '').trim();
     const forcePathStyle = parseBoolean(process.env.S3_FORCE_PATH_STYLE, false);
-    const accessKeyId = (process.env.S3_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID ?? '').trim();
+    const accessKeyId = (process.env.S3_ACCESS_KEY_ID ??
+        process.env.AWS_ACCESS_KEY_ID ??
+        '').trim();
     const secretAccessKey = (process.env.S3_SECRET_ACCESS_KEY ??
         process.env.AWS_SECRET_ACCESS_KEY ??
         '').trim();
@@ -264,7 +279,9 @@ function createS3Storage(kind) {
 function createMulterOptions(kind) {
     const allowedExtensions = kind === 'image' ? imageExtensions : fileExtensions;
     return {
-        storage: exports.isLocalUploadDriver ? createLocalStorage(kind) : createS3Storage(kind),
+        storage: exports.isLocalUploadDriver
+            ? createLocalStorage(kind)
+            : createS3Storage(kind),
         limits: {
             fileSize: kind === 'image' ? exports.MAX_IMAGE_UPLOAD_SIZE : exports.MAX_FILE_UPLOAD_SIZE,
         },
@@ -280,7 +297,9 @@ function createMulterOptions(kind) {
     };
 }
 function buildS3PublicUrl(key) {
-    const configured = (process.env.S3_PUBLIC_BASE_URL ?? '').trim().replace(/\/+$/, '');
+    const configured = (process.env.S3_PUBLIC_BASE_URL ?? '')
+        .trim()
+        .replace(/\/+$/, '');
     if (configured) {
         return `${configured}/${key}`;
     }
