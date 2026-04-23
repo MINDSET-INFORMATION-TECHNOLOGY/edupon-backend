@@ -3,6 +3,8 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
+  IsArray,
   IsString,
   MinLength,
   Validate,
@@ -65,20 +67,26 @@ export class CreateAuthDto {
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({ example: 'Alice Doe' })
+@ApiProperty({ example: 'Alice Doe', description: 'Maps to User.full_name' })
   @TrimString()
   @IsString()
   @IsNotEmpty()
-  fullname!: string;
+  full_name!: string;
+
+  @ApiPropertyOptional({ example: ['JavaScript', 'TypeScript'], description: 'Maps to User.skills (optional)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skills?: string[];
 
   @ApiProperty({ example: 'strongPassword123' })
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password!: string;
 
-  @ApiProperty({
+@ApiProperty({
     enum: Role,
-    description: 'Profile role. Role-specific requirements apply to other fields.',
+    description: 'Role (stored in user.profile.role). Role-specific requirements apply to other fields.',
   })
   @IsEnum(Role, { message: 'Invalid role provided' })
   @IsNotEmpty()
@@ -86,7 +94,7 @@ export class CreateAuthDto {
 
   @ApiPropertyOptional({
     example: 'Some University',
-    description: 'Required when role is student or educator.',
+    description: 'Required when role is student or educator (stored in user.profile.institution).',
   })
   @OptionalTrimString()
   @ValidateIf((o: CreateAuthDto) => o.role === Role.student || o.role === Role.educator)
@@ -96,7 +104,7 @@ export class CreateAuthDto {
 
   @ApiProperty({
     example: 'Computer Science',
-    description: 'Required for all roles.',
+    description: 'Required for all roles (stored in user.profile.area_of_interest).',
   })
   @TrimString()
   @IsNotEmpty({ message: 'area_of_interest is required' })
@@ -105,7 +113,7 @@ export class CreateAuthDto {
 
   @ApiPropertyOptional({
     example: 'Information Technology',
-    description: 'Required when role is company.',
+    description: 'Required when role is company (stored in user.profile.industry).',
   })
   @OptionalTrimString()
   @ValidateIf((o: CreateAuthDto) => o.role === Role.company)
@@ -115,7 +123,7 @@ export class CreateAuthDto {
 
   @ApiPropertyOptional({
     example: 'contact@acme.com',
-    description: 'Required when role is company. Must be a business email domain.',
+    description: 'Required when role is company (stored in user.profile.company_email). Must be a business email domain.',
   })
   @OptionalTrimToLowerCase()
   @ValidateIf((o: CreateAuthDto) => o.role === Role.company)

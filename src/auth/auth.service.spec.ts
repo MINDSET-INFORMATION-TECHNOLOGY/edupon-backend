@@ -116,7 +116,7 @@ describe('AuthService', () => {
     it('hashes password and calls prisma', async () => {
       const dto = {
         email: 'a@b.com',
-        fullname: 'A B',
+        full_name: 'A B',
         password: 'pass1234',
         role: Role.student,
         area_of_interest: 'Testing',
@@ -141,7 +141,7 @@ describe('AuthService', () => {
         data: expect.objectContaining({
           profile: expect.objectContaining({
             email: 'a@b.com',
-            fullname: 'A B',
+            full_name: 'A B',
             password: 'hashed',
             role: Role.student,
           }),
@@ -151,13 +151,13 @@ describe('AuthService', () => {
       expect(result).toMatchObject({
         id: 1,
         email: 'a@b.com',
-        fullname: 'A B',
+        full_name: 'A B',
         role: Role.student,
       });
     });
 
     it('throws BadRequestException on duplicate email', async () => {
-      const dto = { email: 'a@b.com', fullname: '', password: 'p', role: Role.student, area_of_interest: 'None', institution: 'Any' } as any;
+      const dto = { email: 'a@b.com', full_name: '', password: 'p', role: Role.student, area_of_interest: 'None', institution: 'Any' } as any;
       // simulate email already exists by returning a record from
       // findFirst; create shouldn’t even be called.
       mockPrisma.user.findFirst.mockResolvedValue({ id: 'existing', profile: { email: 'a@b.com' } });
@@ -178,7 +178,7 @@ describe('AuthService', () => {
         id: 7,
         profile: {
           email: 'test@example.com',
-          fullname: 'Test User',
+          full_name: 'Test User',
           password: 'hashed-password',
           role: Role.student,
           area_of_interest: 'Testing',
@@ -222,7 +222,7 @@ describe('AuthService', () => {
         id: 9,
         profile: {
           email: 'test@example.com',
-          fullname: 'Test User',
+          full_name: 'Test User',
           password: 'hashed-password',
           role: Role.student,
           area_of_interest: 'Testing',
@@ -282,7 +282,7 @@ describe('AuthService', () => {
         id: 41,
         profile: {
           email: 'john@example.com',
-          fullname: 'John Doe',
+          full_name: 'John Doe',
           password: 'hashed',
           role: Role.student,
           institution: 'Test School',
@@ -308,7 +308,7 @@ describe('AuthService', () => {
         id: 10,
         profile: {
           email: 'reset@example.com',
-          fullname: 'Reset User',
+          full_name: 'Reset User',
           password: 'old-hash',
           role: Role.student,
           institution: 'Test School',
@@ -358,7 +358,7 @@ describe('AuthService', () => {
         id: 10,
         profile: {
           email: 'reset@example.com',
-          fullname: 'Reset User',
+          full_name: 'Reset User',
           password: 'old-hash',
           role: Role.student,
           institution: 'Test School',
@@ -397,7 +397,7 @@ describe('AuthService', () => {
         id: 3,
         profile: {
           email: 'callback@user.com',
-          fullname: 'Callback User',
+          full_name: 'Callback User',
           password: 'hashed',
           role: Role.student,
         },
@@ -406,7 +406,7 @@ describe('AuthService', () => {
       const publicUser = {
         id: 3,
         email: 'callback@user.com',
-        fullname: 'Callback User',
+        full_name: 'Callback User',
         role: Role.student,
       };
 
@@ -443,7 +443,7 @@ describe('AuthService', () => {
         data: expect.objectContaining({
           profile: expect.objectContaining({
             email: 'callback@user.com',
-            fullname: 'Callback User',
+            full_name: 'Callback User',
             role: Role.student,
           }),
         }),

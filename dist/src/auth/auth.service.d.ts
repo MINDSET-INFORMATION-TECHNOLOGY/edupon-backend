@@ -12,7 +12,7 @@ import { MailService } from '../mail/mail.service';
 import { TokenRevocationService } from './token-revocation.service';
 type UserProfileData = {
     email: string;
-    fullname: string;
+    full_name: string;
     password: string;
     role: Role;
     institution: string | null;

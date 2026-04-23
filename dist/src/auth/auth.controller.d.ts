@@ -11,7 +11,7 @@ export declare class AuthController {
     constructor(authService: AuthService);
     create(createAuthDto: CreateAuthDto): Promise<Omit<{
         email: string;
-        fullname: string;
+        full_name: string;
         password: string;
         role: Role;
         institution: string | null;

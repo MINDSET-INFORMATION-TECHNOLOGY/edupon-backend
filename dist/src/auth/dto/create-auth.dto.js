@@ -55,7 +55,8 @@ IsCompanyEmailConstraint = __decorate([
 ], IsCompanyEmailConstraint);
 class CreateAuthDto {
     email;
-    fullname;
+    full_name;
+    skills;
     password;
     role;
     institution;
@@ -72,12 +73,19 @@ __decorate([
     __metadata("design:type", String)
 ], CreateAuthDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Alice Doe' }),
+    (0, swagger_1.ApiProperty)({ example: 'Alice Doe', description: 'Maps to User.full_name' }),
     (0, normalized_string_transform_1.TrimString)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateAuthDto.prototype, "fullname", void 0);
+], CreateAuthDto.prototype, "full_name", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: ['JavaScript', 'TypeScript'], description: 'Maps to User.skills (optional)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], CreateAuthDto.prototype, "skills", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'strongPassword123' }),
     (0, class_validator_1.IsString)(),
@@ -87,7 +95,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({
         enum: enums_1.Role,
-        description: 'Profile role. Role-specific requirements apply to other fields.',
+        description: 'Role (stored in user.profile.role). Role-specific requirements apply to other fields.',
     }),
     (0, class_validator_1.IsEnum)(enums_1.Role, { message: 'Invalid role provided' }),
     (0, class_validator_1.IsNotEmpty)(),
@@ -96,7 +104,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         example: 'Some University',
-        description: 'Required when role is student or educator.',
+        description: 'Required when role is student or educator (stored in user.profile.institution).',
     }),
     (0, normalized_string_transform_1.OptionalTrimString)(),
     (0, class_validator_1.ValidateIf)((o) => o.role === enums_1.Role.student || o.role === enums_1.Role.educator),
@@ -107,7 +115,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'Computer Science',
-        description: 'Required for all roles.',
+        description: 'Required for all roles (stored in user.profile.area_of_interest).',
     }),
     (0, normalized_string_transform_1.TrimString)(),
     (0, class_validator_1.IsNotEmpty)({ message: 'area_of_interest is required' }),
@@ -117,7 +125,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         example: 'Information Technology',
-        description: 'Required when role is company.',
+        description: 'Required when role is company (stored in user.profile.industry).',
     }),
     (0, normalized_string_transform_1.OptionalTrimString)(),
     (0, class_validator_1.ValidateIf)((o) => o.role === enums_1.Role.company),
@@ -128,7 +136,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         example: 'contact@acme.com',
-        description: 'Required when role is company. Must be a business email domain.',
+        description: 'Required when role is company (stored in user.profile.company_email). Must be a business email domain.',
     }),
     (0, normalized_string_transform_1.OptionalTrimToLowerCase)(),
     (0, class_validator_1.ValidateIf)((o) => o.role === enums_1.Role.company),

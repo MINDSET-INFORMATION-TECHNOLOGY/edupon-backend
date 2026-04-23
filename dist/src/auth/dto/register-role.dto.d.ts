@@ -1,6 +1,7 @@
 declare class RegisterCommonDto {
     email: string;
-    fullname: string;
+    full_name: string;
+    skills?: string[];
     password: string;
     area_of_interest: string;
 }

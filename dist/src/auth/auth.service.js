@@ -77,7 +77,7 @@ let AuthService = class AuthService {
             const hashed = await bcrypt.hash(createAuthDto.password, 10);
             const profile = this.buildRoleProfile({
                 email: normalizedEmail,
-                fullname: createAuthDto.fullname,
+                full_name: createAuthDto.full_name,
                 password: hashed,
                 role: createAuthDto.role,
                 institution: createAuthDto.institution,
@@ -185,7 +185,7 @@ let AuthService = class AuthService {
             }
             const nextProfile = this.buildRoleProfile({
                 email: normalizedNextEmail,
-                fullname: updateAuthDto.fullname ?? currentProfile.fullname,
+                full_name: updateAuthDto.full_name ?? currentProfile.full_name,
                 password: nextPassword,
                 role: updateAuthDto.role ?? currentProfile.role,
                 institution: this.resolveOptionalProfileField(updateAuthDto, 'institution', currentProfile.institution),
@@ -243,7 +243,7 @@ let AuthService = class AuthService {
                 to: email,
                 otp,
                 expiresAt,
-                fullname: currentProfile.fullname,
+                fullname: currentProfile.full_name,
             });
             this.logger.log(`OTP issued for user ${user.id}; expires at ${expiresAt.toISOString()}`);
             return {
@@ -283,7 +283,7 @@ let AuthService = class AuthService {
                 to: email,
                 otp,
                 expiresAt,
-                fullname: currentProfile.fullname,
+                fullname: currentProfile.full_name,
             });
             this.logger.log(`Password reset OTP issued for user ${user.id}; expires at ${expiresAt.toISOString()}`);
             return { message: safeMessage };
@@ -392,7 +392,7 @@ let AuthService = class AuthService {
             const payload = {
                 providerUserId: profile.providerUserId,
                 email: profile.email,
-                fullname: profile.fullname,
+                fullname: profile.full_name,
                 accessToken: tokens.accessToken,
             };
             const user = await this.upsertSocialProvider(provider, payload);
@@ -489,7 +489,7 @@ let AuthService = class AuthService {
             return {
                 providerUserId: payload.sub,
                 email: payload.email,
-                fullname,
+                full_name: fullname,
             };
         }
         const response = await fetch('https://api.linkedin.com/v2/userinfo', {
@@ -508,7 +508,7 @@ let AuthService = class AuthService {
         return {
             providerUserId: payload.sub,
             email: payload.email,
-            fullname,
+            full_name: fullname,
         };
     }
     async findOrCreateSocialUser(dto) {
@@ -519,7 +519,7 @@ let AuthService = class AuthService {
         }
         const profile = this.buildRoleProfile({
             email: dto.email,
-            fullname: dto.fullname,
+            full_name: dto.fullname,
             password: await bcrypt.hash((0, crypto_1.randomUUID)(), 10),
             role: enums_1.Role.student,
             institution: 'Not provided',
@@ -583,7 +583,7 @@ let AuthService = class AuthService {
         const nextEmail = (dto.email ?? '').trim().toLowerCase();
         const nextFullname = (dto.fullname ?? '').trim();
         const shouldUpdate = (!!nextEmail && nextEmail !== currentProfile.email) ||
-            (!!nextFullname && nextFullname !== currentProfile.fullname);
+            (!!nextFullname && nextFullname !== currentProfile.full_name);
         if (!shouldUpdate) {
             return this.prisma.user.findFirst({ where: { id: userId } });
         }
@@ -593,7 +593,7 @@ let AuthService = class AuthService {
                 profile: {
                     ...currentProfile,
                     email: nextEmail || currentProfile.email,
-                    fullname: nextFullname || currentProfile.fullname,
+                    fullname: nextFullname || currentProfile.full_name,
                 },
             },
         });
@@ -613,7 +613,7 @@ let AuthService = class AuthService {
         const value = (profile ?? {});
         return {
             email: value.email ?? '',
-            fullname: value.fullname ?? '',
+            full_name: value.full_name ?? '',
             password: value.password ?? '',
             role: value.role ?? enums_1.Role.student,
             institution: value.institution ?? null,
@@ -626,7 +626,7 @@ let AuthService = class AuthService {
     buildRoleProfile(input) {
         const profile = {
             email: input.email.trim().toLowerCase(),
-            fullname: input.fullname.trim(),
+            full_name: input.full_name.trim(),
             password: input.password,
             role: input.role,
             institution: this.normalizeOptionalText(input.institution),
