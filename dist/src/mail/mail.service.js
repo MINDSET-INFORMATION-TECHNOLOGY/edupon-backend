@@ -48,7 +48,8 @@ let MailService = class MailService {
     async sendPasswordResetEmail(input) {
         const from = this.getRequiredEnv('MAIL_FROM');
         const appName = process.env.MAIL_APP_NAME?.trim() || 'Edupon';
-        const subject = process.env.MAIL_PASSWORD_RESET_SUBJECT?.trim() || `${appName} Password Reset`;
+        const subject = process.env.MAIL_PASSWORD_RESET_SUBJECT?.trim() ||
+            `${appName} Password Reset`;
         const greetingName = input.fullname?.trim() || 'there';
         const expiryTime = input.expiresAt.toISOString();
         const text = this.buildCodeEmailText({

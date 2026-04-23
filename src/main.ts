@@ -28,7 +28,9 @@ async function bootstrap() {
   // set a global prefix so all routes are under /api
   app.setGlobalPrefix('api');
   if (isLocalUploadDriver) {
-    app.useStaticAssets(LOCAL_UPLOAD_ROOT, { prefix: `${UPLOAD_PUBLIC_PREFIX}/` });
+    app.useStaticAssets(LOCAL_UPLOAD_ROOT, {
+      prefix: `${UPLOAD_PUBLIC_PREFIX}/`,
+    });
   }
 
   // Swagger / OpenAPI setup
@@ -41,7 +43,8 @@ async function bootstrap() {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: 'Provide JWT access token in the Authorization header as: Bearer <token>',
+        description:
+          'Provide JWT access token in the Authorization header as: Bearer <token>',
       },
       'bearer',
     )

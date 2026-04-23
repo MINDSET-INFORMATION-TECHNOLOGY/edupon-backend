@@ -8,7 +8,11 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { TokenRevocationService } from './token-revocation.service';
 
 @Module({
-  imports: [PrismaModule, MailModule, PassportModule.register({ defaultStrategy: 'jwt' })],
+  imports: [
+    PrismaModule,
+    MailModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+  ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, TokenRevocationService],
   exports: [AuthService],

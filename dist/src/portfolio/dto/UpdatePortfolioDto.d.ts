@@ -1,4 +1,4 @@
-import { CreatePortfolioDto } from "./CreatePortfolioDto";
+import { CreatePortfolioDto } from './CreatePortfolioDto';
 declare const UpdatePortfolioDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreatePortfolioDto>>;
 export declare class UpdatePortfolioDto extends UpdatePortfolioDto_base {
 }

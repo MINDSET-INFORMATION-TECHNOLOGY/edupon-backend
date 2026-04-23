@@ -29,9 +29,11 @@ const MIME_EXTENSION_MAP: Record<string, string> = {
   'application/vnd.ms-excel': '.xls',
   'application/vnd.ms-excel.sheet.macroenabled.12': '.xlsm',
   'application/vnd.ms-powerpoint': '.ppt',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    '.pptx',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    '.docx',
   'application/zip': '.zip',
   'image/gif': '.gif',
   'image/jpeg': '.jpg',
@@ -42,7 +44,14 @@ const MIME_EXTENSION_MAP: Record<string, string> = {
   'text/plain': '.txt',
 };
 
-const DEFAULT_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+const DEFAULT_IMAGE_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.gif',
+  '.svg',
+];
 const DEFAULT_FILE_EXTENSIONS = [
   '.pdf',
   '.doc',
@@ -62,15 +71,25 @@ const DEFAULT_S3_REGION = 'us-east-1';
 const DEFAULT_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
 const DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
-export const LOCAL_UPLOAD_ROOT = process.env.LOCAL_UPLOAD_DIR ?? join(process.cwd(), 'public');
+export const LOCAL_UPLOAD_ROOT =
+  process.env.LOCAL_UPLOAD_DIR ?? join(process.cwd(), 'public');
 export const UPLOAD_PUBLIC_PREFIX = '/public';
 
-const configuredDriver = (process.env.UPLOAD_STORAGE_DRIVER ?? 'local').trim().toLowerCase();
-export const UPLOAD_STORAGE_DRIVER: UploadDriver = configuredDriver === 's3' ? 's3' : 'local';
+const configuredDriver = (process.env.UPLOAD_STORAGE_DRIVER ?? 'local')
+  .trim()
+  .toLowerCase();
+export const UPLOAD_STORAGE_DRIVER: UploadDriver =
+  configuredDriver === 's3' ? 's3' : 'local';
 export const isLocalUploadDriver = UPLOAD_STORAGE_DRIVER === 'local';
 
-const imageExtensions = parseExtensionList(process.env.UPLOAD_IMAGE_EXTENSIONS, DEFAULT_IMAGE_EXTENSIONS);
-const fileExtensions = parseExtensionList(process.env.UPLOAD_FILE_EXTENSIONS, DEFAULT_FILE_EXTENSIONS);
+const imageExtensions = parseExtensionList(
+  process.env.UPLOAD_IMAGE_EXTENSIONS,
+  DEFAULT_IMAGE_EXTENSIONS,
+);
+const fileExtensions = parseExtensionList(
+  process.env.UPLOAD_FILE_EXTENSIONS,
+  DEFAULT_FILE_EXTENSIONS,
+);
 
 export const MAX_IMAGE_UPLOAD_SIZE = parseByteSize(
   process.env.MAX_IMAGE_UPLOAD_SIZE,
@@ -100,12 +119,18 @@ export function ensureUploadDirectories(): void {
   }
 }
 
-export function resolveUploadedFile(file?: UploadedFileLike): UploadedFileResult | null {
+export function resolveUploadedFile(
+  file?: UploadedFileLike,
+): UploadedFileResult | null {
   if (!file) {
     return null;
   }
 
-  const extension = detectExtension(file.originalname, file.mimetype, file.filename ?? file.key);
+  const extension = detectExtension(
+    file.originalname,
+    file.mimetype,
+    file.filename ?? file.key,
+  );
 
   if (!isLocalUploadDriver) {
     const key = (file.key ?? '').trim();
@@ -134,7 +159,10 @@ export function resolveUploadedFile(file?: UploadedFileLike): UploadedFileResult
   };
 }
 
-function parseExtensionList(value: string | undefined, fallback: string[]): Set<string> {
+function parseExtensionList(
+  value: string | undefined,
+  fallback: string[],
+): Set<string> {
   const source = value
     ? value
         .split(',')
@@ -180,13 +208,24 @@ function resolveFolder(kind: UploadKind): string {
   return kind === 'image' ? IMAGE_FOLDER : FILE_FOLDER;
 }
 
-function resolveLocalFolder(destination: string | undefined, mimetype: string | undefined): string {
-  const normalizedDestination = (destination ?? '').replace(/\\/g, '/').toLowerCase();
-  if (normalizedDestination.endsWith(`/${IMAGE_FOLDER}`) || normalizedDestination.endsWith(IMAGE_FOLDER)) {
+function resolveLocalFolder(
+  destination: string | undefined,
+  mimetype: string | undefined,
+): string {
+  const normalizedDestination = (destination ?? '')
+    .replace(/\\/g, '/')
+    .toLowerCase();
+  if (
+    normalizedDestination.endsWith(`/${IMAGE_FOLDER}`) ||
+    normalizedDestination.endsWith(IMAGE_FOLDER)
+  ) {
     return IMAGE_FOLDER;
   }
 
-  if (normalizedDestination.endsWith(`/${FILE_FOLDER}`) || normalizedDestination.endsWith(FILE_FOLDER)) {
+  if (
+    normalizedDestination.endsWith(`/${FILE_FOLDER}`) ||
+    normalizedDestination.endsWith(FILE_FOLDER)
+  ) {
     return FILE_FOLDER;
   }
 
@@ -247,7 +286,10 @@ function slugifyBaseName(value: string): string {
   return slug || 'file';
 }
 
-function buildStoredFilename(file: { originalname?: string; mimetype?: string }): string {
+function buildStoredFilename(file: {
+  originalname?: string;
+  mimetype?: string;
+}): string {
   const id = randomUUID();
   const extension = detectExtension(file.originalname, file.mimetype);
   const originalBase = extractOriginalBaseName(file.originalname);
@@ -255,7 +297,10 @@ function buildStoredFilename(file: { originalname?: string; mimetype?: string })
   return `${id}-${safeBase}${extension}`;
 }
 
-function createObjectKey(kind: UploadKind, file: { originalname?: string; mimetype?: string }): string {
+function createObjectKey(
+  kind: UploadKind,
+  file: { originalname?: string; mimetype?: string },
+): string {
   const folder = resolveFolder(kind);
   return `${folder}/${buildStoredFilename(file)}`;
 }
@@ -278,7 +323,9 @@ function createS3Storage(kind: UploadKind): MulterOptions['storage'] {
   let multerS3: any;
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     S3ClientCtor = require('@aws-sdk/client-s3').S3Client;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     multerS3 = require('multer-s3');
   } catch {
     throw new Error(
@@ -294,7 +341,11 @@ function createS3Storage(kind: UploadKind): MulterOptions['storage'] {
   const region = (process.env.S3_REGION ?? DEFAULT_S3_REGION).trim();
   const endpoint = (process.env.S3_ENDPOINT ?? '').trim();
   const forcePathStyle = parseBoolean(process.env.S3_FORCE_PATH_STYLE, false);
-  const accessKeyId = (process.env.S3_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID ?? '').trim();
+  const accessKeyId = (
+    process.env.S3_ACCESS_KEY_ID ??
+    process.env.AWS_ACCESS_KEY_ID ??
+    ''
+  ).trim();
   const secretAccessKey = (
     process.env.S3_SECRET_ACCESS_KEY ??
     process.env.AWS_SECRET_ACCESS_KEY ??
@@ -325,15 +376,24 @@ function createS3Storage(kind: UploadKind): MulterOptions['storage'] {
     bucket,
     acl: acl || undefined,
     contentType: multerS3.AUTO_CONTENT_TYPE,
-    key: (_req: unknown, file: { originalname?: string; mimetype?: string }, callback: Function) => {
+    key: (
+      _req: unknown,
+      file: { originalname?: string; mimetype?: string },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+      callback: Function,
+    ) => {
       callback(null, createObjectKey(kind, file));
     },
     metadata: (
       _req: unknown,
       file: { originalname?: string; mimetype?: string },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       callback: Function,
     ) => {
-      const extension = detectExtension(file.originalname, file.mimetype).replace('.', '');
+      const extension = detectExtension(
+        file.originalname,
+        file.mimetype,
+      ).replace('.', '');
       callback(null, {
         extension,
         originalName: file.originalname ?? '',
@@ -346,7 +406,9 @@ function createMulterOptions(kind: UploadKind): MulterOptions {
   const allowedExtensions = kind === 'image' ? imageExtensions : fileExtensions;
 
   return {
-    storage: isLocalUploadDriver ? createLocalStorage(kind) : createS3Storage(kind),
+    storage: isLocalUploadDriver
+      ? createLocalStorage(kind)
+      : createS3Storage(kind),
     limits: {
       fileSize: kind === 'image' ? MAX_IMAGE_UPLOAD_SIZE : MAX_FILE_UPLOAD_SIZE,
     },
@@ -366,7 +428,9 @@ function createMulterOptions(kind: UploadKind): MulterOptions {
 }
 
 function buildS3PublicUrl(key: string): string {
-  const configured = (process.env.S3_PUBLIC_BASE_URL ?? '').trim().replace(/\/+$/, '');
+  const configured = (process.env.S3_PUBLIC_BASE_URL ?? '')
+    .trim()
+    .replace(/\/+$/, '');
   if (configured) {
     return `${configured}/${key}`;
   }

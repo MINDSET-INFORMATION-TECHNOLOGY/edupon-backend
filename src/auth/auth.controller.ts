@@ -7,10 +7,16 @@ import {
   Query,
   Req,
   Param,
-  Delete,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -36,7 +42,10 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new account' })
-  @ApiResponse({ status: 201, description: 'The account has been successfully created.' })
+  @ApiResponse({
+    status: 201,
+    description: 'The account has been successfully created.',
+  })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   create(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.create(createAuthDto);
@@ -63,7 +72,10 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 400, description: 'Invalid credentials.' })
-  @ApiResponse({ status: 429, description: 'Too many login attempts. Try again later.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many login attempts. Try again later.',
+  })
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
@@ -71,7 +83,10 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get authenticated user from JWT access token' })
-  @ApiResponse({ status: 200, description: 'Authenticated user details from token.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Authenticated user details from token.',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   me(@Req() req: any) {
     return req.user;
@@ -90,7 +105,10 @@ export class AuthController {
   @Throttle({ default: { limit: 6, ttl: 60_000 } })
   @ApiOperation({ summary: 'Generate and send OTP for account verification' })
   @ApiResponse({ status: 200, description: 'OTP generated successfully.' })
-  @ApiResponse({ status: 429, description: 'Too many OTP requests. Try again later.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many OTP requests. Try again later.',
+  })
   @ApiResponse({ status: 404, description: 'User not found.' })
   requestOtp(@Body() requestOtpDto: RequestOtpDto) {
     return this.authService.requestOtp(requestOtpDto);
@@ -101,7 +119,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify user OTP code (expires after 5 minutes)' })
   @ApiResponse({ status: 200, description: 'OTP verified successfully.' })
   @ApiResponse({ status: 400, description: 'Invalid or expired OTP.' })
-  @ApiResponse({ status: 429, description: 'Too many OTP verification retries. Try again later.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many OTP verification retries. Try again later.',
+  })
   @ApiResponse({ status: 404, description: 'User not found.' })
   verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
     return this.authService.verifyOtp(verifyOtpDto);
@@ -110,8 +131,14 @@ export class AuthController {
   @Post('/password/forgot')
   @Throttle({ default: { limit: 6, ttl: 60_000 } })
   @ApiOperation({ summary: 'Request password reset code' })
-  @ApiResponse({ status: 200, description: 'Password reset code request accepted.' })
-  @ApiResponse({ status: 429, description: 'Too many password reset requests. Try again later.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset code request accepted.',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many password reset requests. Try again later.',
+  })
   forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
@@ -121,7 +148,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Reset password with email and reset code' })
   @ApiResponse({ status: 200, description: 'Password reset successfully.' })
   @ApiResponse({ status: 400, description: 'Invalid or expired reset code.' })
-  @ApiResponse({ status: 429, description: 'Too many password reset attempts. Try again later.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many password reset attempts. Try again later.',
+  })
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
   }
@@ -136,12 +166,29 @@ export class AuthController {
   }
 
   @Get('oauth/:provider/callback')
-  @ApiOperation({ summary: 'Handle provider callback: fetch profile and sign in' })
+  @ApiOperation({
+    summary: 'Handle provider callback: fetch profile and sign in',
+  })
   @ApiParam({ name: 'provider', enum: ['google', 'linkedin'] })
-  @ApiQuery({ name: 'code', required: true, type: String, description: 'OAuth authorization code.' })
+  @ApiQuery({
+    name: 'code',
+    required: true,
+    type: String,
+    description: 'OAuth authorization code.',
+  })
   @ApiQuery({ name: 'scope', required: false, type: String })
-  @ApiQuery({ name: 'authuser', required: false, type: String, description: 'Google only.' })
-  @ApiQuery({ name: 'prompt', required: false, type: String, description: 'Google only.' })
+  @ApiQuery({
+    name: 'authuser',
+    required: false,
+    type: String,
+    description: 'Google only.',
+  })
+  @ApiQuery({
+    name: 'prompt',
+    required: false,
+    type: String,
+    description: 'Google only.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Provider callback handled successfully.',
@@ -173,7 +220,10 @@ export class AuthController {
       dto = await this.validateProviderQuery(LinkedInSignInDto, query);
     }
 
-    const session = await this.authService.signInWithProviderCallback(prov, dto);
+    const session = await this.authService.signInWithProviderCallback(
+      prov,
+      dto,
+    );
 
     if (!session) {
       throw new BadRequestException('Unable to sign in with provider');
@@ -208,7 +258,8 @@ export class AuthController {
   private parseProvider(provider: string): AuthProviderType {
     const normalized = provider.toUpperCase();
     if (normalized === AuthProviderType.GOOGLE) return AuthProviderType.GOOGLE;
-    if (normalized === AuthProviderType.LINKEDIN) return AuthProviderType.LINKEDIN;
+    if (normalized === AuthProviderType.LINKEDIN)
+      return AuthProviderType.LINKEDIN;
     throw new BadRequestException(`Unsupported provider: ${provider}`);
   }
 
@@ -218,7 +269,10 @@ export class AuthController {
   ): Promise<T> {
     const cast = plainToInstance(dtoClass, query);
     try {
-      await validateOrReject(cast, { whitelist: true, forbidNonWhitelisted: false });
+      await validateOrReject(cast, {
+        whitelist: true,
+        forbidNonWhitelisted: false,
+      });
       return cast;
     } catch (error) {
       throw new BadRequestException(this.formatValidationError(error));
@@ -231,9 +285,13 @@ export class AuthController {
     }
 
     const messages = (error as ValidationError[])
-      .flatMap((validationError) => Object.values(validationError.constraints ?? {}))
+      .flatMap((validationError) =>
+        Object.values(validationError.constraints ?? {}),
+      )
       .filter((message) => typeof message === 'string');
 
-    return messages.length > 0 ? messages : ['Invalid OAuth callback query parameters'];
+    return messages.length > 0
+      ? messages
+      : ['Invalid OAuth callback query parameters'];
   }
 }

@@ -89,7 +89,10 @@ let AuthController = class AuthController {
     async validateProviderQuery(dtoClass, query) {
         const cast = (0, class_transformer_1.plainToInstance)(dtoClass, query);
         try {
-            await (0, class_validator_1.validateOrReject)(cast, { whitelist: true, forbidNonWhitelisted: false });
+            await (0, class_validator_1.validateOrReject)(cast, {
+                whitelist: true,
+                forbidNonWhitelisted: false,
+            });
             return cast;
         }
         catch (error) {
@@ -103,14 +106,19 @@ let AuthController = class AuthController {
         const messages = error
             .flatMap((validationError) => Object.values(validationError.constraints ?? {}))
             .filter((message) => typeof message === 'string');
-        return messages.length > 0 ? messages : ['Invalid OAuth callback query parameters'];
+        return messages.length > 0
+            ? messages
+            : ['Invalid OAuth callback query parameters'];
     }
 };
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('register'),
     (0, swagger_1.ApiOperation)({ summary: 'Register a new account' }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'The account has been successfully created.' }),
+    (0, swagger_1.ApiResponse)({
+        status: 201,
+        description: 'The account has been successfully created.',
+    }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Bad request.' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -139,7 +147,10 @@ __decorate([
         },
     }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid credentials.' }),
-    (0, swagger_1.ApiResponse)({ status: 429, description: 'Too many login attempts. Try again later.' }),
+    (0, swagger_1.ApiResponse)({
+        status: 429,
+        description: 'Too many login attempts. Try again later.',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
@@ -149,7 +160,10 @@ __decorate([
     (0, common_1.Get)('me'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, swagger_1.ApiOperation)({ summary: 'Get authenticated user from JWT access token' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Authenticated user details from token.' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Authenticated user details from token.',
+    }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized.' }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -172,7 +186,10 @@ __decorate([
     (0, throttler_1.Throttle)({ default: { limit: 6, ttl: 60_000 } }),
     (0, swagger_1.ApiOperation)({ summary: 'Generate and send OTP for account verification' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OTP generated successfully.' }),
-    (0, swagger_1.ApiResponse)({ status: 429, description: 'Too many OTP requests. Try again later.' }),
+    (0, swagger_1.ApiResponse)({
+        status: 429,
+        description: 'Too many OTP requests. Try again later.',
+    }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'User not found.' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -185,7 +202,10 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Verify user OTP code (expires after 5 minutes)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OTP verified successfully.' }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid or expired OTP.' }),
-    (0, swagger_1.ApiResponse)({ status: 429, description: 'Too many OTP verification retries. Try again later.' }),
+    (0, swagger_1.ApiResponse)({
+        status: 429,
+        description: 'Too many OTP verification retries. Try again later.',
+    }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'User not found.' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -196,8 +216,14 @@ __decorate([
     (0, common_1.Post)('/password/forgot'),
     (0, throttler_1.Throttle)({ default: { limit: 6, ttl: 60_000 } }),
     (0, swagger_1.ApiOperation)({ summary: 'Request password reset code' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Password reset code request accepted.' }),
-    (0, swagger_1.ApiResponse)({ status: 429, description: 'Too many password reset requests. Try again later.' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Password reset code request accepted.',
+    }),
+    (0, swagger_1.ApiResponse)({
+        status: 429,
+        description: 'Too many password reset requests. Try again later.',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [forgot_password_dto_1.ForgotPasswordDto]),
@@ -209,7 +235,10 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Reset password with email and reset code' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Password reset successfully.' }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid or expired reset code.' }),
-    (0, swagger_1.ApiResponse)({ status: 429, description: 'Too many password reset attempts. Try again later.' }),
+    (0, swagger_1.ApiResponse)({
+        status: 429,
+        description: 'Too many password reset attempts. Try again later.',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [reset_password_dto_1.ResetPasswordDto]),
@@ -228,12 +257,29 @@ __decorate([
 ], AuthController.prototype, "getProviderSignInUrl", null);
 __decorate([
     (0, common_1.Get)('oauth/:provider/callback'),
-    (0, swagger_1.ApiOperation)({ summary: 'Handle provider callback: fetch profile and sign in' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Handle provider callback: fetch profile and sign in',
+    }),
     (0, swagger_1.ApiParam)({ name: 'provider', enum: ['google', 'linkedin'] }),
-    (0, swagger_1.ApiQuery)({ name: 'code', required: true, type: String, description: 'OAuth authorization code.' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'code',
+        required: true,
+        type: String,
+        description: 'OAuth authorization code.',
+    }),
     (0, swagger_1.ApiQuery)({ name: 'scope', required: false, type: String }),
-    (0, swagger_1.ApiQuery)({ name: 'authuser', required: false, type: String, description: 'Google only.' }),
-    (0, swagger_1.ApiQuery)({ name: 'prompt', required: false, type: String, description: 'Google only.' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'authuser',
+        required: false,
+        type: String,
+        description: 'Google only.',
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'prompt',
+        required: false,
+        type: String,
+        description: 'Google only.',
+    }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Provider callback handled successfully.',

@@ -20,7 +20,11 @@ let AuthModule = class AuthModule {
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, mail_module_1.MailModule, passport_1.PassportModule.register({ defaultStrategy: 'jwt' })],
+        imports: [
+            prisma_module_1.PrismaModule,
+            mail_module_1.MailModule,
+            passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
+        ],
         controllers: [auth_controller_1.AuthController],
         providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, token_revocation_service_1.TokenRevocationService],
         exports: [auth_service_1.AuthService],

@@ -1,6 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '../../generated/prisma/enums';
-import { IsEmail, IsEnum, IsIn, IsNotEmpty, IsString, MinLength, IsOptional, IsArray } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsIn,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  IsOptional,
+  IsArray,
+} from 'class-validator';
 import {
   TrimString,
   TrimToLowerCase,
@@ -13,13 +22,16 @@ class RegisterCommonDto {
   @IsNotEmpty()
   email!: string;
 
-@ApiProperty({ description: 'Maps to User.full_name' })
+  @ApiProperty({ description: 'Maps to User.full_name' })
   @TrimString()
   @IsString()
   @IsNotEmpty()
   full_name!: string;
 
-  @ApiPropertyOptional({ example: ['JavaScript', 'TypeScript'], description: 'Maps to User.skills (optional)' })
+  @ApiPropertyOptional({
+    example: ['JavaScript', 'TypeScript'],
+    description: 'Maps to User.skills (optional)',
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -30,7 +42,10 @@ class RegisterCommonDto {
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password!: string;
 
-@ApiProperty({ description: 'Required for all roles (stored in user.profile.area_of_interest).' })
+  @ApiProperty({
+    description:
+      'Required for all roles (stored in user.profile.area_of_interest).',
+  })
   @TrimString()
   @IsNotEmpty({ message: 'area_of_interest is required' })
   @IsString()

@@ -18,7 +18,9 @@ let PortfolioService = class PortfolioService {
         this.prisma = prisma;
     }
     async create(userId, dto) {
-        const existing = await this.prisma.portfolio.findUnique({ where: { userId } });
+        const existing = await this.prisma.portfolio.findUnique({
+            where: { userId },
+        });
         if (existing) {
             throw new common_1.ConflictException('User already has a portfolio');
         }
