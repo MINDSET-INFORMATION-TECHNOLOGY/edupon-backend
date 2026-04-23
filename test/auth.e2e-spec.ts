@@ -12,7 +12,7 @@ describe('Auth registration (e2e)', () => {
   const fakeUser = {
     id: 'abc123',
     email: 'bob@example.com',
-    fullname: 'Bob Builder',
+    full_name: 'Bob Builder',
     role: 'STUDENT',
   };
   const fakeGoogleAuthUrl = {
@@ -33,7 +33,7 @@ describe('Auth registration (e2e)', () => {
     user: {
       id: 1,
       email: 'google@example.com',
-      fullname: 'Google User',
+      full_name: 'Google User',
       role: 'STUDENT',
     },
     tokens: {
@@ -46,7 +46,7 @@ describe('Auth registration (e2e)', () => {
     user: {
       id: 2,
       email: 'linkedin@example.com',
-      fullname: 'LinkedIn User',
+      full_name: 'LinkedIn User',
       role: 'STUDENT',
     },
     tokens: {
@@ -77,7 +77,7 @@ describe('Auth registration (e2e)', () => {
   };
   const validAccessToken = jwt.sign(
     { sub: 1, email: 'bob@example.com', role: 'STUDENT' },
-    'dev-jwt-secret',
+    process.env.JWT_SECRET || 'dev-jwt-secret',
     { expiresIn: '15m' },
   );
   const authServiceMock = {
@@ -135,7 +135,7 @@ describe('Auth registration (e2e)', () => {
       .post('/api/register')
       .send({
         email: 'bob@example.com',
-        fullname: 'Bob Builder',
+        full_name: 'Bob Builder',
         password: 'secret987',
         role: 'student',
         institution: 'Test University',
@@ -150,7 +150,7 @@ describe('Auth registration (e2e)', () => {
       .post('/api/register')
       .send({
         email: 'not-an-email',
-        fullname: '',
+        full_name: '',
       })
       .expect(400);
   });
