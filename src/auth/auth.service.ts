@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, NotFoundException, HttpException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -890,9 +890,11 @@ full_name: updateAuthDto.full_name ?? currentProfile.full_name,
     try {
       return await callback();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unexpected error';
-      const stack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(`${method} failed: ${message}`, stack);
+      if (!(error instanceof HttpException) || error.getStatus() >= 500) {
+        const message = error instanceof Error ? error.message : 'Unexpected error';
+        const stack = error instanceof Error ? error.stack : undefined;
+        this.logger.error(`${method} failed: ${message}`, stack);
+      }
       throw error;
     }
   }
