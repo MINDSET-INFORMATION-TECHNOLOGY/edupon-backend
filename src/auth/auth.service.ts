@@ -1004,11 +1004,24 @@ export class AuthService {
     try {
       return await callback();
     } catch (error) {
-      if (!(error instanceof HttpException) || error.getStatus() >= 500) {
-        const message =
-          error instanceof Error ? error.message : 'Unexpected error';
+      if (!(error instanceof HttpException) || (error.getStatus && error.getStatus() >= 500)) {
+        const message = error instanceof Error ? error.message : 'Unexpected error';
         const stack = error instanceof Error ? error.stack : undefined;
         this.logger.error(`${method} failed: ${message}`, stack);
+        // Log error to file
+        const fs = require('fs');
+        const logMsg = `[${new Date().toISOString()}] ${method} failed: ${message}\n${stack || ''}\n`;
+        try {
+          fs.appendFileSync('logs/error.log', logMsg);
+        } catch (logErr) {
+          this.logger.error('Failed to write to error.log', logErr);
+        }
+        // Expose error message in response for debugging (500 errors)
+        throw new HttpException({
+          statusCode: 500,
+          message: message,
+          stack: stack,
+        }, 500);
       }
       throw error;
     }
