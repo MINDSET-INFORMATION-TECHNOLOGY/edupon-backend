@@ -1,1 +1,9 @@
-# GitHub Branch Creation Steps&#10;&#10;1. [x] Install GitHub CLI (winget)&#10;2. [ ] Authenticate gh auth login&#10;3. [ ] Create TODO.md for tracking (done)&#10;4. [ ] git add -A &amp;&amp; git commit -m "Update portfolio DTOs, auth service/dtos, Prisma schema, generated files, add TODO.md"&#10;5. [ ] git checkout -b blackboxai/updates-portfolio-auth-schema&#10;6. [ ] git push -u origin blackboxai/updates-portfolio-auth-schema&#10;7. [ ] Optional: gh pr create
+# Revert to Prisma 6
+
+## Steps
+- [x] 1. Update `package.json` — downgrade prisma to ^6.6.0, @prisma/client to ^6.6.0, remove @prisma/adapter-pg
+- [x] 2. Remove `prisma.config.ts` — not needed in Prisma 6
+- [x] 3. Update `src/prisma/prisma.service.ts` — replace `adapter` with `datasources`
+- [ ] 4. Run `npm install` to apply package changes
+- [ ] 5. Run `npx prisma generate` to regenerate client
+

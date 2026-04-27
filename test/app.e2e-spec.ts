@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+import { describe, it } from 'node:test';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -28,3 +29,11 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 });
+function beforeAll(arg0: () => Promise<void>) {
+  throw new Error('Function not implemented.');
+}
+
+function afterAll(arg0: () => Promise<void>) {
+  throw new Error('Function not implemented.');
+}
+
